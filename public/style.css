@@ -1400,3 +1400,75 @@ td[contenteditable="plaintext-only"]:empty:before {
 }
 
 /*#endregion MOBILE RESPONSIVENESS*/
+
+/*#region SIDEBAR MENU*/
+#menu-holder {
+    display: flex;
+    float: right;
+    margin: auto 20px auto auto;
+}
+
+.menu-sidebar {
+    width: 200px;
+    height: max-content;
+    position: fixed;
+    top: 10px;
+    right: -200px;
+    padding-top: 50px;
+    background: var(--table-blue);
+    border-radius: var(--border-radius);
+    color: var(--white);
+    transition: 250ms;
+  }
+
+  .menu-sidebar .link {
+    padding: 8px 25px;
+    cursor: pointer;
+    transition: 250ms;
+    font-weight: 300;
+  }
+
+  .menu-sidebar .link:hover {
+    color: var(--dark);
+  }
+  
+  .menu-toggle {
+    z-index: 100;
+    position: relative;
+    right: 0;
+    padding: 5px 10px;
+    font-size: 20px;
+    font-weight: bold;
+    background: var(--table-blue);
+    color: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    cursor: pointer;
+    transition: 250ms;
+  }
+  .menu-toggle .menu-label {
+    display: block;
+  }
+  .menu-toggle .close-label {
+    display: none;
+  }
+  #menu-toggle {
+    display: none;
+  }
+  #menu-toggle:checked ~ .menu-toggle {
+    background: var(--red);
+  }
+  #menu-toggle:checked ~ .menu-sidebar {
+    right: 10px;
+    box-shadow: var(--box-shadow);
+  }
+  #menu-toggle:checked ~ .menu-toggle {
+    right: 100px;
+  }
+  #menu-toggle:checked ~ .menu-toggle .menu-label {
+    display: none;
+  }
+  #menu-toggle:checked ~ .menu-toggle .close-label {
+    display: block;
+  }
+/*#endregion menu-sidebar MENU*/
