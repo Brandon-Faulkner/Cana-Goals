@@ -1,0 +1,24 @@
+{
+    "name": "Cana Goals by Brandon Faulkner",
+    "short_name": "Cana Goals",
+    "icons": [
+        {
+            "src": "Resources/Icons/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "Resources/Icons/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }   
+    ],
+    "theme_color": "#00aa63",
+    "background_color": "#2d2d2d",
+    "start_url": "https://cana-goals.web.app",
+    "scope": "./",
+    "display": "standalone",
+    "gcm_sender_id": "587415518534",
+    "orientation": "natural"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "canagoals",
+  "version": "1.0.0",
+  "description": "Web app used to add, monitor and complete goals during 100 day or 300 day goal periods for Cana Church staff members.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Brandon Faulkner",
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "^10.4.0"
+  }
+}

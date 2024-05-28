@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en-us" data-theme="light">
+
+<head>
+  <title>Cana Goals</title>
+  <meta charset="utf-8">
+  <link href="https://fonts.cdnfonts.com/css/futura-pt" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="Resources/Icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="Resources/Icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="Resources/Icons/favicon-16x16.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="mask-icon" href="Resources/Icons/safari-pinned-tab.svg" color="#00aa63">
+  <meta name="apple-mobile-web-app-title" content="Cana Goals">
+  <meta name="application-name" content="Cana Goals">
+  <meta name="msapplication-TileColor" content="#2d2d2d">
+  <meta name="theme-color" content="#2d2d2d">
+  <meta name="description"
+    content="Web app used to add, monitor and complete goals during 100 day or 300 day goal periods for Cana Church staff members.">
+</head>
+
+<body>
+  <div id="login-page" class="pop-up">
+    <div id="login-wrapper" class="login-wrapper">
+      <button id="login-close-btn" class="login-close-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
+          <path
+            d="M 25 3 C 12.86158 3 3 12.86158 3 25 C 3 37.13842 12.86158 47 25 47 C 37.13842 47 47 37.13842 47 25 C 47 12.86158 37.13842 3 25 3 z M 25 5 C 36.05754 5 45 13.94246 45 25 C 45 36.05754 36.05754 45 25 45 C 13.94246 45 5 36.05754 5 25 C 5 13.94246 13.94246 5 25 5 z M 16.990234 15.990234 A 1.0001 1.0001 0 0 0 16.292969 17.707031 L 23.585938 25 L 16.292969 32.292969 A 1.0001 1.0001 0 1 0 17.707031 33.707031 L 25 26.414062 L 32.292969 33.707031 A 1.0001 1.0001 0 1 0 33.707031 32.292969 L 26.414062 25 L 33.707031 17.707031 A 1.0001 1.0001 0 0 0 32.980469 15.990234 A 1.0001 1.0001 0 0 0 32.292969 16.292969 L 25 23.585938 L 17.707031 16.292969 A 1.0001 1.0001 0 0 0 16.990234 15.990234 z">
+          </path>
+        </svg>
+      </button>
+      <div id="login-form-container" class="login-form-container">
+        <div class="login-title-text">
+          <div class="login-title login">Welcome Back!</div>
+        </div>
+        <div class="login-form-inner">
+          <form action="" class="login" id="login-form-content">
+            <div class="field">
+              <input id="login-email" type="text" placeholder="Email Address" required>
+            </div>
+            <div class="field">
+              <input id="login-password" type="password" placeholder="Password" required>
+              <span class="fa-solid fa-eye eye-icon"></span>
+            </div>
+            <div class="field btn">
+              <div class="btn-layer"></div>
+              <input id="login-button" type="submit" value="Log In">
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="goal-language-page" class="pop-up">
+    <div id="language-wrapper" class="login-wrapper">
+      <button id="language-close-btn" class="login-close-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
+          <path
+            d="M 25 3 C 12.86158 3 3 12.86158 3 25 C 3 37.13842 12.86158 47 25 47 C 37.13842 47 47 37.13842 47 25 C 47 12.86158 37.13842 3 25 3 z M 25 5 C 36.05754 5 45 13.94246 45 25 C 45 36.05754 36.05754 45 25 45 C 13.94246 45 5 36.05754 5 25 C 5 13.94246 13.94246 5 25 5 z M 16.990234 15.990234 A 1.0001 1.0001 0 0 0 16.292969 17.707031 L 23.585938 25 L 16.292969 32.292969 A 1.0001 1.0001 0 1 0 17.707031 33.707031 L 25 26.414062 L 32.292969 33.707031 A 1.0001 1.0001 0 1 0 33.707031 32.292969 L 26.414062 25 L 33.707031 17.707031 A 1.0001 1.0001 0 0 0 32.980469 15.990234 A 1.0001 1.0001 0 0 0 32.292969 16.292969 L 25 23.585938 L 17.707031 16.292969 A 1.0001 1.0001 0 0 0 16.990234 15.990234 z">
+          </path>
+        </svg>
+      </button>
+      <div id="login-form-container" class="login-form-container">
+        <span>
+          <h3><em>Goals Should Be</em></h3>
+          <p><strong>Specific</strong>&nbsp;&ndash; be clear what you are working on</p>
+          <p><strong>Measurable</strong>&nbsp;&ndash; Say how much of the project you will complete and how it is
+            measured</p>
+          <p><strong>Achievable</strong>&nbsp;&ndash; Can you get to the completion point of the goal</p>
+          <p><strong>Relevant</strong>&nbsp;&ndash; In this case, your goals should target some aspect of the bottomline
+            focus of the
+            specified days.</p>
+          <p><strong>Timebound</strong> &ndash; Goal completion should occur within specified days.</p>
+          <h3><em>Goal Language</em></h3>
+          <p><strong>Develop</strong>&nbsp;&ndash; Develop goals describe the pursuit of an outline, assigned responsibilities, a
+            collection of leaders engaged, and executable next steps at the ready or measurably completed. A Scratch
+            Sheet should be available and approved and complete with all but the most detailed of information.</p>
+          <p><strong>Research</strong>&nbsp;&ndash; Research Goals requires a completed report that includes feasibility, process,
+            and objective. Research is not concerned with preparation or execution but with organization and
+            philosophy/theology.</p>
+          <p><strong>Add on</strong>&nbsp;&ndash; Add on goals seek to add functionality or divisions of people into the scope of an
+            existing ministry. *new feature*</p>
+          <p><strong>Remodel</strong>&nbsp;&ndash; Remodel goals expand a ministry or significantly improve the functionality and
+            scale of a program or activity. *better function*</p>
+          <h3><em>Goal Recording</em></h3>
+          <p><strong>Building blocks are not goals</strong>&nbsp;&ndash; they are components necessary to accomplish the goal. They
+            are environmental or personnel or financial conditions necessary to reaching your goals</p>
+          <p><strong>System think</strong>&nbsp;- Your building blocks should indicate that you understand the SYSTEM behind your
+            goal.</p>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast">
+    <div class="toast-content">
+      <i class="fa-solid fa-bell bell"></i>
+      <div class="toast-message">
+        <span class="toast-title">Notification Title</span>
+        <span>Notification Message.</span>
+      </div>
+    </div>
+    <i class="fa-solid fa-xmark close"></i>
+    <div class="toast-progress"></div>
+  </div>
+
+  <div id="main-page">
+    <header>
+      <div>
+        <img src="Resources/Icons/goals-logo.png">
+        <h1>Cana Goals</h1>
+        <div id="header-actions-container">
+          <div id="darkmodetoggle-container">
+            <input type="checkbox" id="theme-toggle">
+            <label for="theme-toggle" id="theme-toggle-label" data-tooltip="right">
+              <i class="fas fa-moon"></i>
+              <i class="fas fa-sun"></i>
+              <span class="ball"></span>
+              <span class="tooltip">Switch between Dark and Light mode</span>
+            </label>
+          </div>
+          <button id="header-language-btn" data-tooltip="right">
+            <i class="fa-solid fa-earth-americas"></i>
+            <span class="tooltip">
+              <h3><em>Goals Should Be</em></h3>
+              <p>Specific&nbsp;&ndash; be clear what you are working on</p>
+              <p>Measurable&nbsp;&ndash; Say how much of the project you will complete and how it is measured</p>
+              <p>Achievable&nbsp;&ndash; Can you get to the completion point of the goal</p>
+              <p>Relevant&nbsp;&ndash; In this case, your goals should target some aspect of the bottomline focus of the
+                specified days.</p>
+              <p>Timebound &ndash; Goal completion should occur within specified days.</p>
+              <h3><em>Goal Language</em></h3>
+              <p>Develop&nbsp;&ndash; Develop goals describe the pursuit of an outline, assigned responsibilities, a
+                collection of leaders engaged, and executable next steps at the ready or measurably completed. A Scratch
+                Sheet should be available and approved and complete with all but the most detailed of information.</p>
+              <p>Research&nbsp;&ndash; Research Goals requires a completed report that includes feasibility, process,
+                and objective. Research is not concerned with preparation or execution but with organization and
+                philosophy/theology.</p>
+              <p>Add on&nbsp;&ndash; Add on goals seek to add functionality or divisions of people into the scope of an
+                existing ministry. *new feature*</p>
+              <p>Remodel&nbsp;&ndash; Remodel goals expand a ministry or significantly improve the functionality and
+                scale of a program or activity. *better function*</p>
+              <h3><em>Goal Recording</em></h3>
+              <p>Building blocks are not goals&nbsp;&ndash; they are components necessary to accomplish the goal. They
+                are environmental or personnel or financial conditions necessary to reaching your goals</p>
+              <p>System think&nbsp;- Your building blocks should indicate that you understand the SYSTEM behind your
+                goal.</p>
+            </span>
+          </button>
+          <button id="header-login-btn" class="header-login-btn">
+            <i class="fa-solid fa-right-to-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+    <div id="tables-container">
+      <ul id="semesters-container">
+      </ul>
+    </div>
+  </div>
+  <script type="module" src="script.js"></script>
+</body>
+
+</html>
