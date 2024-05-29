@@ -1,9 +1,8 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDDYuTQDXbkmGM73f-mBCghdLeTsXLoS9Q",
   authDomain: "cana-goals.firebaseapp.com",
@@ -19,6 +18,52 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
+function ChangeMenuItems(id, text, iClass, color) {
+  const elem = document.getElementById(id);
+  elem.innerHTML = text + " <i class=\"fas " + iClass + "\"></i>";
+  if (color) elem.style.background = color;
+}
+
+function ShowNotifToast(title, message, statusColor, isTimed, seconds) {
+  const toastElem = document.querySelector('.toast');
+  const toastMessage = document.querySelector('.toast-message');
+  const toastProgress = document.querySelector('.toast-progress');
+  const toastClose = document.querySelector('.toast .close');
+
+  //Check if toast is active, wait if it is
+  if (toastElem.classList.contains('active')) {
+    setTimeout(() => {
+      ShowNotifToast(title, message, statusColor, isTimed, seconds);
+    }, 1000);
+  } else {
+    //Change --toast-status css var to statusColor
+    toastElem.style.setProperty('--toast-status', statusColor);
+
+    //Update toast title
+    toastMessage.children[0].textContent = title;
+    toastMessage.children[1].textContent = message;
+
+    //Now show the toast
+    toastElem.classList.add('active');
+
+    //Show the progress bar if isTimed is true
+    if (isTimed === true) {
+      toastProgress.style.setProperty('--toast-duration', seconds + 's');
+      toastProgress.classList.add('active');
+
+      toastProgress.addEventListener("animationend", function () {
+        toastElem.classList.remove('active');
+        toastProgress.classList.remove('active');
+      });
+    }
+  }
+
+  toastClose.addEventListener('click', function () {
+    toastProgress.classList.remove('active');
+    toastElem.classList.remove('active');
+  });
+}
+
 window.addEventListener('load', () => {
   //Ensure that the browser supports the service worker API then register it
   var registration = null;
@@ -32,14 +77,16 @@ window.addEventListener('load', () => {
   //#region VARIABLES
   const mainScreen = document.getElementById('main-page');
   const semestersContainer = document.getElementById('semesters-container');
-  const darkmodeToggle = document.getElementById('theme-toggle');
+  var usersTablesArr = []; var headersArr = []; var contentArr = [];
+  var bbArr = []; var commentsArr = []; var isFirstLoad = true; var mainUsersName = null;
 
-  //Detect users prefered color scheme
+  //Color theme variables and functions
+  const menuTheme = document.getElementById('menu-themes');
   const localTheme = localStorage.getItem("theme");
   const darkTheme = window.matchMedia("(prefers-color-scheme: dark)");
   const currTheme = GetThemeString(localTheme, darkTheme);
   document.querySelector("html").setAttribute("data-theme", currTheme);
-  currTheme === "dark" ? darkmodeToggle.checked = false : darkmodeToggle.checked = true;
+  currTheme === "dark" ? ChangeMenuItems("menu-themes", "Light Mode", "fa-sun") : ChangeMenuItems("menu-themes", "Dark Mode", "fa-moon");
 
   function GetThemeString(localTheme, darkTheme) {
     if (localTheme !== null) return localTheme;
@@ -47,128 +94,73 @@ window.addEventListener('load', () => {
     return "light";
   }
 
-  darkmodeToggle.addEventListener('change', function () {
-    const newTheme = darkmodeToggle.checked ? "light" : "dark";
+  menuTheme.addEventListener('click', function () {
+    const newTheme = localStorage.getItem("theme") === "dark" ? "light" : "dark";
     localStorage.setItem("theme", newTheme);
     document.querySelector("html").setAttribute("data-theme", newTheme);
+    newTheme === "dark" ? ChangeMenuItems("menu-themes", "Light Mode", "fa-sun") : ChangeMenuItems("menu-themes", "Dark Mode", "fa-moon");
   });
 
-  const loginSignOutBtn = document.getElementById('header-login-btn');
-  const loginScreen = document.getElementById('login-page');
-  const loginCloseBtn = document.getElementById('login-close-btn');
-  const loginText = document.querySelector(".login-title-text .login");
-  const loginEmail = document.getElementById('login-email');
-  const loginPassword = document.getElementById('login-password');
-  const loginButton = document.getElementById('login-button');
-  const loginPeek = loginPassword.parentElement.children[1];
+  //Goal language variables and functions
+  const languageScreen = document.getElementById('language-page');
+  const menuGoals = document.getElementById('menu-goals');
+  const languageClose = document.getElementById('language-close');
 
-  const languageScreen = document.getElementById('goal-language-page');
-  const languageBtn = document.getElementById('header-language-btn');
-  const languageCloseBtn = document.getElementById('language-close-btn');
-
-  languageBtn.addEventListener('click', function () {
-    languageScreen.classList.add('show');
-    mainScreen.classList.add('disable-click');
+  menuGoals.addEventListener('click', function () {
+    languageScreen.classList.add('pop-up');
   });
 
-  languageCloseBtn.addEventListener('click', function () {
-    languageScreen.classList.remove('show');
-    mainScreen.classList.remove('disable-click');
+  languageClose.addEventListener('click', function () {
+    languageScreen.classList.remove('pop-up');
   });
-
-  const toastElem = document.querySelector('.toast');
-  const toastMessage = document.querySelector('.toast-message');
-  const toastProgress = document.querySelector('.toast-progress');
-  const toastClose = document.querySelector('.toast .close');
-
-  var toastTimeout, progressTimeout;
-  function ShowNotifToast(title, message, statusColor, isTimed, seconds) {
-    //Check if toast is active, wait if it is
-    if (toastElem.classList.contains('active')) {
-      setTimeout(() => {
-        ShowNotifToast(title, message, statusColor, isTimed, seconds);
-      }, 1000);
-    } else {
-      //Disable Login/Sign out btn for convenience
-      loginSignOutBtn.classList.add('disabled-btn');
-
-      //Change --toast-status css var to statusColor
-      toastElem.style.setProperty('--toast-status', statusColor);
-
-      //Update toast title
-      toastMessage.children[0].textContent = title;
-      toastMessage.children[1].textContent = message;
-
-      //Now show the toast
-      toastElem.classList.add('active');
-
-      //Show the progress bar if isTimed is true
-      if (isTimed === true) {
-        toastProgress.style.setProperty('--toast-duration', seconds + 's');
-        toastProgress.classList.add('active');
-
-        toastTimeout = setTimeout(() => {
-          toastElem.classList.remove('active');
-        }, (seconds * 1000) + 200);
-
-        progressTimeout = setTimeout(() => {
-          toastProgress.classList.remove('active');
-          loginSignOutBtn.classList.remove('disabled-btn');
-        }, (seconds * 1000) + 500);
-      }
-    }
-  }
-
-  toastClose.addEventListener('click', function () {
-    //First clear timers then remove 'active' classes
-    clearTimeout(toastTimeout);
-    clearTimeout(progressTimeout);
-    toastProgress.classList.remove('active');
-    toastElem.classList.remove('active');
-    loginSignOutBtn.classList.remove('disabled-btn');
-  });
-
-  var usersTablesArr = []; var headersArr = []; var contentArr = [];
-  var bbArr = []; var commentsArr = []; var isFirstLoad = true; var mainUsersName = null;
   //#endregion VARIABLES
 
   //#region LOGIN FUNCTIONS
+  const menuLogin = document.getElementById('menu-login');
+  const loginScreen = document.getElementById('login-page');
+  const loginClose = document.getElementById('login-close');
+  const loginEmail = document.getElementById('login-email');
+  const loginPassword = document.getElementById('login-password');
+  const loginButton = document.getElementById('login-button');
+  const loginPeek = loginPassword.nextElementSibling;
+
   //Detect login status and setup tables
   onAuthStateChanged(auth, (user) => {
     if (user === null) {
       // No one is signed in, prompt login
       isFirstLoad = true;
       semestersContainer.replaceChildren();
-      loginSignOutBtn.className = "header-login-btn";
-      loginSignOutBtn.click();
+      ChangeMenuItems("menu-login", "Log In", "fa-right-to-bracket", "var(--color-green)");
+      menuLogin.click();
     } else if (user.isAnonymous === false) {
       // User is signed in
       ListenForUsersTables();
-      loginSignOutBtn.className = "header-signout-btn";
+      ChangeMenuItems("menu-login", "Sign Out", "fa-right-from-bracket", "var(--color-red)");
+      loginScreen.remove();
     }
   });
 
-  loginSignOutBtn.addEventListener('click', function () {
-    if (loginSignOutBtn.classList.contains('header-login-btn')) {
-      loginScreen.classList.add('show');
-      mainScreen.classList.add('disable-click');
-    } else if (loginSignOutBtn.classList.contains('header-signout-btn')) {
+  menuLogin.addEventListener('click', function () {
+    if (this.textContent.includes("Log In")) {
+      loginScreen.classList.add('pop-up');
+    } else {
       SignOutUser(auth);
     }
   });
 
-  loginCloseBtn.addEventListener('click', function () {
-    loginScreen.classList.remove('show');
-    mainScreen.classList.remove('disable-click');
-    ClearLoginInputs();
+  loginClose.addEventListener('click', function () {
+    loginScreen.classList.remove('pop-up');
+    loginEmail.value = null;
+    loginPassword.value = null;
+    loginEmail.classList.remove('login-error');
+    loginPassword.classList.remove('login-error');
   });
 
   loginButton.addEventListener('click', function (e) {
     e.preventDefault();
-    loginText.classList.remove('login-error');
     loginEmail.classList.remove('login-error');
     loginPassword.classList.remove('login-error');
-    loginButton.parentElement.classList.add('login-click');
+    loginButton.classList.add('login-click');
     SignInEmailAndPassword(auth, loginEmail.value, loginPassword.value);
   });
 
@@ -186,50 +178,26 @@ window.addEventListener('load', () => {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         // Signed in 
-        loginText.textContent = "Welcome Back!";
-        loginButton.parentElement.classList.remove('login-click');
-        loginSignOutBtn.className = "header-signout-btn";
-        loginCloseBtn.click();
+        loginButton.classList.remove('login-click');
+        ChangeMenuItems("menu-login", "Sign Out", "fa-right-from-bracket", "var(--color-red)");
+        loginClose.click();
       })
       .catch((error) => {
         // Unsuccessful Sign In
-        loginText.textContent = "Log In Failed";
-        loginText.classList.add('login-error');
-
-        switch (error.code) {
-          case 'auth/invalid-email':
-            loginEmail.classList.add('login-error');
-            break;
-          case 'auth/wrong-password':
-            loginPassword.classList.add('login-error');
-            break;
-          default:
-            loginEmail.classList.add('login-error');
-            loginPassword.classList.add('login-error');
-            break;
-        }
-
-        loginButton.parentElement.classList.remove('login-click');
+        loginEmail.classList.add('login-error');
+        loginPassword.classList.add('login-error');
+        loginButton.classList.remove('login-click');
       });
   }
 
   function SignOutUser(auth) {
     signOut(auth).then(() => {
-      loginCloseBtn.click();
-      loginSignOutBtn.className = "header-login-btn";
+      loginClose.click();
+      window.location.reload();
     }).catch((error) => {
       console.log(error.code + ": " + error.message);
       ShowNotifToast("Sign Out Error", "There was an issue with signing you out. Please try again.", "var(--red)", true, 8);
     });
-  }
-
-  function ClearLoginInputs() {
-    loginEmail.value = null;
-    loginPassword.value = null;
-    loginText.textContent = "Welcome Back!";
-    loginText.classList.remove('login-error');
-    loginEmail.classList.remove('login-error');
-    loginPassword.classList.remove('login-error');
   }
   //#endregion LOGIN FUNCTIONS
 
