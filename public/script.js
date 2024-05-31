@@ -197,24 +197,24 @@ function continueWithApp() {
   var semesterTitlesArr = []; var semesterLi = null;
   onValue(ref(database, 'Semesters/'), (snapshot) => {
     if (snapshot.exists()) {
-      var index = -1;
-
       snapshot.forEach((semester) => {
         //Check if this semester has already been handled
         if (!semesterTitlesArr.includes(semester.key)) {
-          semesterTitlesArr.push(semester.key);
-          createSemesterMenuItem(semester.key + ": " + semester.child("Start").val() + " - " + semester.child("End").val(), index++);
-          
+          semesterTitlesArr.unshift(semester.key);
+
           //Create the li for this semester
           semesterLi = document.createElement('li');
-          semesterLi.setAttribute("data-semester", semester.key);
-          semestersContainer.appendChild(semesterLi);
+          semesterLi.setAttribute("data-semester", semester.key + ": " + semester.child("Start").val() + " - " + semester.child("End").val());
+          semestersContainer.insertBefore(semesterLi, semestersContainer.firstChild);
+
+          //Create menu item tab for the semester
+          createSemesterMenuItem(semester.key + ": " + semester.child("Start").val() + " - " + semester.child("End").val());
         } else {
           //Get existing li and update goal focus for it
-          semesterLi = semestersContainer.querySelector('[data-semester="'+ semester.key +'"]');
+          semesterLi = semestersContainer.querySelector('[data-semester="' + semester.key + '"]');
           semesterLi.querySelector(".goal-focus-p").textContent = semester.child("Focus").val();
         }
-        
+
         //Make sure tables exist for this semester in the DB
         if (semester.child("Tables").exists()) {
           //Create the tables for each user
@@ -229,30 +229,44 @@ function continueWithApp() {
     }
   });
 
-  function createSemesterMenuItem(semesterKey, index) {
+  function createSemesterMenuItem(semesterKey) {
     const label = document.createElement('label');
     const input = document.createElement('input');
 
     input.setAttribute("id", semesterKey);
     input.setAttribute("type", "radio");
     input.setAttribute("name", "semester-menu");
-    if (index != null) input.checked = index === 0 ? true : false;
 
     label.setAttribute("for", semesterKey);
     label.textContent = semesterKey;
 
     semestersMenu.insertBefore(input, semestersMenu.firstChild);
     input.insertAdjacentElement('afterend', label);
+
+    input.addEventListener('click', () => {
+      Array.from(document.getElementsByName('semester-menu')).forEach((tab) => {
+        if (tab === input) {
+          tab.checked = true;
+          document.querySelector('[data-semester="' + tab.getAttribute("id") + '"]').style = "";
+        } else {
+          tab.checked = false;
+          document.querySelector('[data-semester="' + tab.getAttribute("id") + '"]').style = "display: none";
+        }
+      });
+    });
+
+    input.click();
   }
 
   function createUserTable(semesterLi, tableData) {
     var tableWrap = document.createElement("div"); tableWrap.setAttribute("id", tableData.key + "-table");
-    var userName = document.createElement("h2"); userName.textContent = tableData.child("Name").val(); 
+    var userName = document.createElement("h2"); userName.textContent = tableData.child("Name").val();
     var table = document.createElement("table"); tableWrap.appendChild(userName);
-    
-    //Create the table header
+
+    //Create the table header with an extra empty th
     var tableHead = document.createElement("thead");
     var headRow = document.createElement("tr");
+    headRow.appendChild(document.createElement('th'));
     tableData.child("Headers").forEach((col) => {
       var headCol = document.createElement('th');
       headCol.textContent = col.val(); headRow.appendChild(headCol);
@@ -264,28 +278,26 @@ function continueWithApp() {
     tableData.child("Content").forEach((row) => {
       //Initial creation of framework pieces of the table
       var bodyGoalRow = document.createElement('tr'); bodyGoalRow.className = "view"; tableBody.appendChild(bodyGoalRow);
-      var bodyBlockRow = document.createElement('tr'); bodyBlockRow.className = "fold"; tableBody.appendChild(bodyBlockRow);
+      var bodyBlockRow = document.createElement('tr'); bodyBlockRow.className = "fold-closed"; tableBody.appendChild(bodyBlockRow);
+      bodyGoalRow.appendChild(createTableButtons(BUTTON_ENUM.FOLDS));
 
-      var blockTd = document.createElement('td'); blockTd.setAttribute('colspan', 3);
-      blockTd.className = "fold-main-td"; bodyBlockRow.appendChild(blockTd);
-      var blockDiv = document.createElement('div'); blockDiv.className = "fold-div"; blockTd.appendChild(blockDiv);
+      var blockTd = document.createElement('td'); 
+      blockTd.setAttribute('colspan', 4); bodyBlockRow.appendChild(blockTd);
+      var blockDiv = document.createElement('div'); blockTd.appendChild(blockDiv);
       var blockTable = document.createElement('table'); blockDiv.appendChild(blockTable);
       var blockHead = document.createElement('thead'); blockTable.appendChild(blockHead);
       var blockBody = document.createElement('tbody'); blockTable.appendChild(blockBody);
-      var blockBtnRow = document.createElement('tr'); blockBody.appendChild(blockBtnRow);
-      var blockBtn = document.createElement('button'); blockBtnRow.appendChild(blockBtn);
-      blockBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Building Block';
+      blockTable.classList.add('building-block-table');
+      blockBody.appendChild(createTableButtons(BUTTON_ENUM.BUILDING_BLOCK));
 
       var commentTable = document.createElement('table'); blockDiv.appendChild(commentTable);
       var commentHead = document.createElement('thead'); commentTable.appendChild(commentHead);
       var commentBody = document.createElement('tbody'); commentTable.appendChild(commentBody);
       var commentColRow = document.createElement('tr'); commentHead.appendChild(commentColRow);
-      var commentColHead = document.createElement('th'); commentColHead.textContent = "Comments"; 
-      commentColRow.appendChild(commentColHead);
-      var commentBtnRow = document.createElement('tr'); commentBody.appendChild(commentBtnRow);
-      var commentBtn = document.createElement('button'); commentBtnRow.appendChild(commentBtn);
-      commentBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Comment';
-      
+      var commentColHead = document.createElement('th'); commentColHead.textContent = "Comments";
+      commentColRow.appendChild(commentColHead); commentTable.classList.add('comment-table');
+      commentBody.appendChild(createTableButtons(BUTTON_ENUM.COMMENT));
+
       //Create Goal rows
       row.forEach((rowData) => {
         var rowTd = document.createElement('td');
@@ -298,7 +310,7 @@ function continueWithApp() {
           var colIndex = 0;
           tableData.child("Headers").forEach((col) => {
             var blockColTh = document.createElement('th');
-            blockColTh.textContent = colIndex === 0 ? "Building Blocks" : col.val(); 
+            blockColTh.textContent = colIndex === 0 ? "Building Blocks" : col.val();
             blockColRow.appendChild(blockColTh); colIndex++;
           });
 
@@ -315,14 +327,55 @@ function continueWithApp() {
             var commentRow = document.createElement('tr'); commentBody.insertBefore(commentRow, commentBody.firstChild);
             var commentRowTd = document.createElement('td'); commentRowTd.textContent = comment.val();
             commentRow.appendChild(commentRowTd);
-          });  
-        } 
-      }); 
+          });
+        }
+      });
     });
 
     //Append rest of elements
     table.appendChild(tableBody);
     tableWrap.appendChild(table);
     semesterLi.appendChild(tableWrap);
+  }
+
+  const BUTTON_ENUM = { BUILDING_BLOCK: 0, COMMENT: 1, FOLDS: 2 }
+  function createTableButtons(buttonToMake) {
+    var button = document.createElement('button');
+    var buttonTd = document.createElement('td'); buttonTd.appendChild(button);
+    var elemToReturn = buttonTd;
+
+    switch (buttonToMake) {
+      case BUTTON_ENUM.BUILDING_BLOCK:
+        var tableRow = document.createElement('tr');
+        var emptyCell = document.createElement('td'); 
+        emptyCell.classList.add('empty-cell');
+        tableRow.appendChild(emptyCell);
+        tableRow.appendChild(emptyCell.cloneNode());
+        button.className = "add-building-block";
+        button.innerHTML = '<i class="fas fa-plus"></i> Add Building Block';
+        tableRow.appendChild(buttonTd); elemToReturn = tableRow;
+        break;
+      case BUTTON_ENUM.COMMENT:
+        var tableRow = document.createElement('tr'); 
+        button.className = "add-comment";
+        button.innerHTML = '<i class="fas fa-plus"></i> Add Comment';
+        tableRow.appendChild(buttonTd); elemToReturn = tableRow;
+        break;
+      case BUTTON_ENUM.FOLDS:
+        button.className = "fold-btn fas fa-caret-down";
+        button.addEventListener('click', () => {
+          var parentTableRowElem = button.parentElement.parentElement;
+          if (button.classList.contains('fa-caret-down')) {
+            button.className = 'fold-btn fas fa-caret-up';
+            parentTableRowElem.nextElementSibling.className = 'fold-open';
+          } else {
+            button.className = 'fold-btn fas fa-caret-down';
+            parentTableRowElem.nextElementSibling.className = 'fold-closed';
+          }
+        });
+        break;
+    }
+
+    return elemToReturn;
   }
 }
