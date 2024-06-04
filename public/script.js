@@ -17,6 +17,10 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
+//Enums
+const STATUS_COLOR = { RED: "var(--color-red)", GREEN: "var(--color-green)" }
+const BUTTON_ENUM = { BUILDING_BLOCK: 0, COMMENT: 1, FOLDS: 2 }
+
 function changeSidebarMenuItem(id, text, iClass, color) {
   const elem = document.getElementById(id);
   elem.innerHTML = text + " <i class=\"fas " + iClass + "\"></i>";
@@ -184,7 +188,7 @@ window.addEventListener('load', () => {
       window.location.reload();
     }).catch((error) => {
       console.log(error.code + ": " + error.message);
-      showNotifToast("Sign Out Error", "There was an issue with signing you out. Please try again.", "var(--red)", true, 8);
+      showNotifToast("Sign Out Error", "There was an issue with signing you out. Please try again.", STATUS_COLOR.RED, true, 8);
     });
   }
   //#endregion LOGIN FUNCTIONS
@@ -338,7 +342,6 @@ function continueWithApp() {
     semesterLi.appendChild(tableWrap);
   }
 
-  const BUTTON_ENUM = { BUILDING_BLOCK: 0, COMMENT: 1, FOLDS: 2 }
   function createTableButtons(buttonToMake) {
     var button = document.createElement('button');
     var buttonTd = document.createElement('td'); buttonTd.appendChild(button);
@@ -355,12 +358,14 @@ function continueWithApp() {
         button.innerHTML = '<i class="fas fa-plus"></i> Add Building Block';
         tableRow.appendChild(buttonTd); elemToReturn = tableRow;
         break;
+
       case BUTTON_ENUM.COMMENT:
         var tableRow = document.createElement('tr'); 
         button.className = "add-comment";
         button.innerHTML = '<i class="fas fa-plus"></i> Add Comment';
         tableRow.appendChild(buttonTd); elemToReturn = tableRow;
         break;
+
       case BUTTON_ENUM.FOLDS:
         button.className = "fold-btn fas fa-caret-down";
         button.addEventListener('click', () => {
