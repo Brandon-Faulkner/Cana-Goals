@@ -3,18 +3,18 @@
     "short_name": "Cana Goals",
     "icons": [
         {
-            "src": "Resources/Icons/android-chrome-192x192.png",
+            "src": "/android-chrome-192x192.png?v=2",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "Resources/Icons/android-chrome-512x512.png",
+            "src": "/android-chrome-512x512.png?v=2",
             "sizes": "512x512",
             "type": "image/png"
-        }   
+        }
     ],
-    "theme_color": "#00aa63",
+    "theme_color": "#2d2d2d",
     "background_color": "#2d2d2d",
     "start_url": "https://cana-goals.web.app",
     "scope": "./",
