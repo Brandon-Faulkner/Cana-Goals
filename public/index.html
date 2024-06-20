@@ -98,11 +98,12 @@
   </div>
 
   <div id="context-menu">
-    <span id="add-goal"></span>
+    <span id="add-goal"><i class="fas fa-list-check"></i>Add New Goal</span>
+    <span id="expand-folds"><i class="fas fa-caret-up"></i>Expand Table Folds</span>
+    <span id="close-folds"><i class="fas fa-caret-down"></i>Close Table Folds</span>
+    <div id="context-menu-line"></div>
     <span id="add-build-block"></span>
     <span id="add-comment"></span>
-    <span id="expand-folds"></span>
-    <span id="close-folds"></span>
     <span id="delete-item"></span>
   </div>
 
@@ -132,9 +133,16 @@
   <script type="module" src="script.js"></script>
 </body>
 
+<template id="template-goal-focus">
+<div id="goal-focus">
+  <h2></h2>
+  <p class="goal-focus-p" placeholder="Enter Goal Focus..."></p>
+</div>
+</template>
+
 <template id="template-user-table">
   <div id="userID-table" data-context="user-table">
-    <h2>User Name</h2>
+    <h2 placeholder="Enter Your Name..."></h2>
     <table>
       <thead>
         <tr>
@@ -153,9 +161,9 @@
 <template id="template-goal">
   <tr class="view" data-context="user-goal">
     <td><button class="fold-btn fas fa-caret-down"></button></td>
-    <td></td>
-    <td></td>
-    <td></td>
+    <td placeholder="Goal..."></td>
+    <td placeholder="Due Date..."></td>
+    <td placeholder="Progress..."></td>
   </tr>
   <tr class="fold-closed">
     <td colspan="4">
@@ -187,15 +195,15 @@
 
 <template id="template-build-block">
   <tr data-context="user-build-block">
-    <td></td>
-    <td></td>
-    <td>0</td>
+    <td placeholder="Building Block..."></td>
+    <td placeholder="Due Date..."></td>
+    <td placeholder="Progress...">0</td>
   </tr>
 </template>
 
 <template id="template-comment">
   <tr data-context="user-comment">
-    <td></td>
+    <td placeholder="Add a comment..."></td>
   </tr>
 </template>
 

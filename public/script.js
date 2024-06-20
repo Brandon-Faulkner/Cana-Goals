@@ -73,6 +73,8 @@ window.addEventListener('load', () => {
     }).catch(swErr => console.log(`Service Worker Installation Error: ${swErr}}`));
   }
 
+  const sideMenuToggle = document.getElementById("menu-toggle");
+
   //Color theme variables and functions
   const menuTheme = document.getElementById('menu-themes');
   const localTheme = localStorage.getItem("theme");
@@ -92,6 +94,7 @@ window.addEventListener('load', () => {
     localStorage.setItem("theme", newTheme);
     document.querySelector("html").setAttribute("data-theme", newTheme);
     newTheme === "dark" ? changeSidebarMenuItem("menu-themes", "Light Mode", "fa-sun") : changeSidebarMenuItem("menu-themes", "Dark Mode", "fa-moon");
+    sideMenuToggle.checked = false;
   });
 
   //Goal language variables and functions
@@ -101,6 +104,7 @@ window.addEventListener('load', () => {
 
   menuGoals.addEventListener('click', function () {
     languageScreen.classList.add('pop-up');
+    sideMenuToggle.checked = false;
   });
 
   languageClose.addEventListener('click', function () {
@@ -133,6 +137,7 @@ window.addEventListener('load', () => {
   menuLogin.addEventListener('click', function () {
     if (this.textContent.includes("Log In")) {
       loginScreen.classList.add('pop-up');
+      sideMenuToggle.checked = false;
     } else {
       signOutUser(auth);
     }
@@ -197,6 +202,7 @@ function continueWithApp() {
   const semestersContainer = document.getElementById('semesters-container');
   const contextMenu = document.getElementById('context-menu');
 
+  //#region TABLE CREATION FUNCTIONS
   var semesterTitlesArr = []; var semesterLi = null;
   onValue(ref(database, 'Semesters/'), (snapshot) => {
     if (snapshot.exists()) {
@@ -221,13 +227,25 @@ function continueWithApp() {
         //Make sure tables exist for this semester in the DB
         if (semester.child("Tables").exists()) {
           //Create the tables for each user
+          var userHasTable = false;
           semester.child("Tables").forEach((uid) => {
+            if (uid.key === auth.currentUser.uid) userHasTable = true;
             createUserTable(semesterLi, uid);
           });
+
+          //If user doesn't have a table, create one.
+          //Otherwise, move users table above the other ones
+          if (!userHasTable) {
+            createDefaultTable(semesterLi, auth.currentUser.uid);
+          } else {
+            //Get the users table then move to top
+            var usersTable = semesterLi.querySelector(`[id='${auth.currentUser.uid}-table']`);
+            semesterLi.insertBefore(usersTable, semesterLi.firstChild);
+          }
         } else {
-
+          //No tables exist, create default one for user
+          createDefaultTable(semesterLi, auth.currentUser.uid);
         }
-
       });
     }
   });
@@ -265,7 +283,7 @@ function continueWithApp() {
     //First clone the user table then append it to semester with basic data
     const userTableTemplate = document.getElementById('template-user-table');
     const userTable = userTableTemplate.content.cloneNode(true);
-    const tableWrap = userTable.querySelector('#userID-table'); 
+    const tableWrap = userTable.querySelector('#userID-table');
     tableWrap.setAttribute("id", tableData.key + "-table");
     const userName = tableWrap.querySelector('h2');
     userName.textContent = tableData.child("Name").val();
@@ -282,94 +300,149 @@ function continueWithApp() {
       //Clone new goal row to hold all data
       var goalClone = goalTemplate.content.cloneNode(true);
       var viewRow = goalClone.querySelector('.view');
-      var foldRow = goalClone.querySelector('[class*="fold"]');
+      var foldRow = goalClone.querySelector('tr[class*="fold"]');
       tableBody.appendChild(goalClone);
 
       //Now update elements with tableData
-      var index = 0;
+      var goalIndex = 0;
+      var containsBB = false; var containsComment = false;
       var goalTDs = Array.from(viewRow.querySelectorAll('td:not(td:first-of-type)'));
       row.forEach((rowData) => {
         if (rowData.key != "BB" && rowData.key != "Comments") {
-          goalTDs[index].textContent = rowData.val();
+          goalTDs[goalIndex++].textContent = rowData.val();
         } else if (rowData.key === "BB") {
-          //TODO: Clone BB template then insert forEach
+          containsBB = true;
+          //Clone BB template then update elements
+          rowData.forEach((bbRow) => {
+            var bbIndex = 0;
+            var bbClone = buildBlockTemplate.content.cloneNode(true);
+            var bbTDs = Array.from(bbClone.querySelectorAll('td'));
+            bbRow.forEach((bbRowData) => {
+              bbTDs[bbIndex++].textContent = bbRowData.val();
+            });
+            foldRow.querySelector('.building-block-table tbody').appendChild(bbClone);
+          });
         } else {
-          //TODO: Clone Comment template then insert forEach
+          containsComment = true;
+          //Clone Comment template then update elements
+          rowData.forEach((comment) => {
+            var commentClone = commentTemplate.content.cloneNode(true);
+            var commentTD = commentClone.querySelector('td');
+            commentTD.textContent = comment.val();
+            foldRow.querySelector('.comment-table tbody').appendChild(commentClone);
+          });
         }
-
-        index++;
       });
+
+      //If this row does not contain a comment or a build block, add default one
+      if (!containsBB) {
+        var bbClone = buildBlockTemplate.content.cloneNode(true);
+        foldRow.querySelector('.building-block-table tbody').appendChild(bbClone);
+      }
+
+      if (!containsComment) {
+        var commentClone = commentTemplate.content.cloneNode(true);
+        foldRow.querySelector('.comment-table tbody').appendChild(commentClone);
+      }
     });
-
   }
 
-  function createFoldButtons() {
-    var button = document.createElement('button');
-    var buttonTd = document.createElement('td'); buttonTd.appendChild(button);
-    button.className = "fold-btn fas fa-caret-down";
-    return buttonTd;
-  }
+  function createDefaultTable(semesterLi, userID) {
+    const userTableTemplate = document.getElementById('template-user-table');
+    const userTableClone = userTableTemplate.content.cloneNode(true);
+    const goalTemplate = document.getElementById('template-goal');
+    const goalClone = goalTemplate.content.cloneNode(true);
+    const foldRow = goalClone.querySelector('tr[class*="fold"]');
+    const buildBlockTemplate = document.getElementById('template-build-block');
+    const buildBlockClone = buildBlockTemplate.content.cloneNode(true);
+    const commentTemplate = document.getElementById('template-comment');
+    const commentClone = commentTemplate.content.cloneNode(true);
 
-  //Context Menu Functions -----------------------------------------
+    var tableWrap = userTableClone.querySelector('div');
+    tableWrap.setAttribute('id', userID + '-table');
+
+    var userTableBody = userTableClone.querySelector('tbody');
+    userTableBody.appendChild(goalClone);
+
+    var buildBlockTableBody = foldRow.querySelector('.building-block-table tbody');
+    buildBlockTableBody.appendChild(buildBlockClone);
+
+    var commentTableBody = foldRow.querySelector('.comment-table tbody');
+    commentTableBody.appendChild(commentClone);
+
+    semesterLi.insertBefore(userTableClone, semesterLi.firstChild);
+  }
+  //#endregion TABLE CREATION FUNCTIONS
+
+  //#region CONTEXT MENU FUNCTIONS
   const addGoal = document.getElementById('add-goal');
-  const addBuildBlock = document.getElementById('add-build-block');
-  const addComment = document.getElementById('add-comment');
   const expandFolds = document.getElementById('expand-folds');
   const closeFolds = document.getElementById('close-folds');
+  const contextLine = document.getElementById('context-menu-line');
+  const addBuildBlock = document.getElementById('add-build-block');
+  const addComment = document.getElementById('add-comment');
   const deleteItem = document.getElementById('delete-item');
-  var lastContextTable, lastContextGoal;
+  var lastContextTable, lastContextGoal, lastItemToDelete;
 
   semestersContainer.addEventListener('contextmenu', (e) => {
     //Allow different actions based on which context is targeted
     var targetElem = e.target.closest('[data-context]');
     if (targetElem) {
-      //Initially hide all actions
-      showHideContextAction(addGoal, false);
+      //Initially hide extra actions
+      contextLine.style.display = 'none';
       showHideContextAction(addBuildBlock, false);
       showHideContextAction(addComment, false);
-      showHideContextAction(expandFolds, false);
-      showHideContextAction(closeFolds, false);
       showHideContextAction(deleteItem, false);
+
+      lastContextTable = e.target.closest('div[id*="-table"]');
 
       //Show specific actions
       switch (targetElem.getAttribute('data-context')) {
-        case 'user-table':
-          lastContextTable = targetElem;
-          showHideContextAction(addGoal, true, 'fa-list-check', 'Add New Goal');
-          showHideContextAction(expandFolds, true, 'fa-caret-up', 'Expand Table Folds');
-          showHideContextAction(closeFolds, true, 'fa-caret-down', 'Close Table Folds');
-          break;
         case 'user-goal':
           //Determine which goal is highlighted
           lastContextGoal = targetElem;
           var goalList = Array.from(targetElem.parentElement.querySelectorAll('[data-context="user-goal"]'));
-
-          showHideContextAction(addGoal, true, 'fa-list-check', 'Add New Goal');
-          showHideContextAction(deleteItem, true, 'fa-trash', `Delete Goal #${goalList.indexOf(targetElem) + 1}`);
+          if (goalList.length != 1) {
+            showHideContextAction(deleteItem, true, 'fa-trash', `Delete Goal #${goalList.indexOf(targetElem) + 1}`);
+            contextLine.style.display = '';
+            lastItemToDelete = { elem: targetElem, type: 'goal' };
+          }
           break;
         case 'user-build-block-head':
-          lastContextGoal = targetElem.closest('.fold-open').previousSibling;
+          lastContextGoal = targetElem.closest('.fold-open').previousElementSibling;
           showHideContextAction(addBuildBlock, true, 'fa-cube', 'Add Building Block');
+          contextLine.style.display = '';
           break;
         case 'user-build-block':
           //Determine which build block is highlighted
-          lastContextGoal = targetElem.closest('.fold-open').previousSibling;
+          lastContextGoal = targetElem.closest('.fold-open').previousElementSibling;
           var bbList = Array.from(targetElem.parentElement.children);
 
           showHideContextAction(addBuildBlock, true, 'fa-cube', 'Add Building Block');
-          showHideContextAction(deleteItem, true, 'fa-trash', `Delete Building Block #${bbList.indexOf(targetElem) + 1}`);
+          if (bbList.length != 1) {
+            showHideContextAction(deleteItem, true, 'fa-trash', `Delete Building Block #${bbList.indexOf(targetElem) + 1}`);
+            lastItemToDelete = { elem: bbList[bbList.indexOf(targetElem)], type: 'build-block' };
+          }
+
+          contextLine.style.display = '';
           break;
         case 'user-comment-head':
-          lastContextGoal = targetElem.closest('.fold-open').previousSibling;
+          lastContextGoal = targetElem.closest('.fold-open').previousElementSibling;
           showHideContextAction(addComment, true, 'fa-comment', 'Add New Comment');
+          contextLine.style.display = '';
           break;
         case 'user-comment':
           //Determine which comment is highlighted
-          lastContextGoal = targetElem.closest('.fold-open').previousSibling;
+          lastContextGoal = targetElem.closest('.fold-open').previousElementSibling;
           var commentList = Array.from(targetElem.parentElement.children);
 
           showHideContextAction(addComment, true, 'fa-comment', 'Add New Comment');
-          showHideContextAction(deleteItem, true, 'fa-trash', `Delete Comment #${commentList.indexOf(targetElem) + 1}`);
+          if (commentList.length === 1 && commentList[0].textContent.trim() !== "") {
+            showHideContextAction(deleteItem, true, 'fa-trash', `Delete Comment #${commentList.indexOf(targetElem) + 1}`);
+            lastItemToDelete = { elem: commentList[commentList.indexOf(targetElem)], type: 'comment' };
+          }
+
+          contextLine.style.display = '';
           break;
       }
 
@@ -399,7 +472,7 @@ function continueWithApp() {
         closeFoldsFunc(lastContextTable);
         break;
       case deleteItem:
-        deleteItemFunc();
+        deleteItemFunc(lastItemToDelete);
         break;
     }
 
@@ -462,12 +535,15 @@ function continueWithApp() {
   }
 
   function addBuildBlockFunc(userGoal) {
+    const buildBlockTable = userGoal.nextElementSibling.querySelector('.building-block-table tbody');
     const buildBlockTemplate = document.getElementById('template-build-block');
-
+    buildBlockTable.appendChild(buildBlockTemplate.content.cloneNode(true));
   }
 
   function addCommentFunc(userGoal) {
-
+    const commentTable = userGoal.nextElementSibling.querySelector('.comment-table tbody');
+    const commentTemplate = document.getElementById('template-comment');
+    commentTable.appendChild(commentTemplate.content.cloneNode(true));
   }
 
   function expandFoldsFunc(userTable) {
@@ -489,7 +565,21 @@ function continueWithApp() {
   }
 
   function deleteItemFunc(item) {
-
+    switch (item.type) {
+      case 'goal':
+        item.elem.nextElementSibling.remove();
+        item.elem.remove();
+        break;
+      case 'comment':
+        if (item.elem.parentElement.children.length === 1) {
+          addCommentFunc(lastContextGoal);
+        }
+        item.elem.remove();
+        break;
+      default:
+        item.elem.remove();
+        break;
+    }
   }
-  //----------------------------------------------------------------
+  //#endregion CONTEXT MENU FUNCTIONS
 }
