@@ -97,6 +97,15 @@
     <div class="toast-progress"></div>
   </div>
 
+  <div id="context-menu">
+    <span id="add-goal"></span>
+    <span id="add-build-block"></span>
+    <span id="add-comment"></span>
+    <span id="expand-folds"></span>
+    <span id="close-folds"></span>
+    <span id="delete-item"></span>
+  </div>
+
   <div id="main-page">
     <header>
       <div>
@@ -122,5 +131,72 @@
   </div>
   <script type="module" src="script.js"></script>
 </body>
+
+<template id="template-user-table">
+  <div id="userID-table" data-context="user-table">
+    <h2>User Name</h2>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Goals</th>
+          <th>Due Dates</th>
+          <th>% Complete</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<template id="template-goal">
+  <tr class="view" data-context="user-goal">
+    <td><button class="fold-btn fas fa-caret-down"></button></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr class="fold-closed">
+    <td colspan="4">
+      <div>
+        <table class="building-block-table">
+          <thead>
+            <tr data-context="user-build-block-head">
+              <th>Building Blocks</th>
+              <th>Due Dates</th>
+              <th>% Complete</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <table class="comment-table">
+          <thead>
+            <tr data-context="user-comment-head">
+              <th>Comments</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+    </td>
+  </tr>
+</template>
+
+<template id="template-build-block">
+  <tr data-context="user-build-block">
+    <td></td>
+    <td></td>
+    <td>0</td>
+  </tr>
+</template>
+
+<template id="template-comment">
+  <tr data-context="user-comment">
+    <td></td>
+  </tr>
+</template>
 
 </html>

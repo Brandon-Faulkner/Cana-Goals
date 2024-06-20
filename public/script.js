@@ -17,9 +17,7 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
-//Enums
 const STATUS_COLOR = { RED: "var(--color-red)", GREEN: "var(--color-green)" }
-const BUTTON_ENUM = { BUILDING_BLOCK: 0, COMMENT: 1, FOLDS: 2 }
 
 function changeSidebarMenuItem(id, text, iClass, color) {
   const elem = document.getElementById(id);
@@ -197,6 +195,7 @@ window.addEventListener('load', () => {
 function continueWithApp() {
   const semestersMenu = document.getElementById('semesters-menu');
   const semestersContainer = document.getElementById('semesters-container');
+  const contextMenu = document.getElementById('context-menu');
 
   var semesterTitlesArr = []; var semesterLi = null;
   onValue(ref(database, 'Semesters/'), (snapshot) => {
@@ -263,124 +262,234 @@ function continueWithApp() {
   }
 
   function createUserTable(semesterLi, tableData) {
-    var tableWrap = document.createElement("div"); tableWrap.setAttribute("id", tableData.key + "-table");
-    var userName = document.createElement("h2"); userName.textContent = tableData.child("Name").val();
-    var table = document.createElement("table"); tableWrap.appendChild(userName);
+    //First clone the user table then append it to semester with basic data
+    const userTableTemplate = document.getElementById('template-user-table');
+    const userTable = userTableTemplate.content.cloneNode(true);
+    const tableWrap = userTable.querySelector('#userID-table'); 
+    tableWrap.setAttribute("id", tableData.key + "-table");
+    const userName = tableWrap.querySelector('h2');
+    userName.textContent = tableData.child("Name").val();
+    semesterLi.appendChild(userTable);
 
-    //Create the table header with an extra empty th
-    var tableHead = document.createElement("thead");
-    var headRow = document.createElement("tr");
-    headRow.appendChild(document.createElement('th'));
-    tableData.child("Headers").forEach((col) => {
-      var headCol = document.createElement('th');
-      headCol.textContent = col.val(); headRow.appendChild(headCol);
-    });
-    tableHead.appendChild(headRow); table.appendChild(tableHead);
+    //Template elements
+    const goalTemplate = document.getElementById('template-goal');
+    const buildBlockTemplate = document.getElementById('template-build-block');
+    const commentTemplate = document.getElementById('template-comment');
 
-    //Create the table body
-    var tableBody = document.createElement('tbody');
+    //Now add all data from tableData into user table
+    const tableBody = tableWrap.querySelector('tbody');
     tableData.child("Content").forEach((row) => {
-      //Initial creation of framework pieces of the table
-      var bodyGoalRow = document.createElement('tr'); bodyGoalRow.className = "view"; tableBody.appendChild(bodyGoalRow);
-      var bodyBlockRow = document.createElement('tr'); bodyBlockRow.className = "fold-closed"; tableBody.appendChild(bodyBlockRow);
-      bodyGoalRow.appendChild(createTableButtons(BUTTON_ENUM.FOLDS));
+      //Clone new goal row to hold all data
+      var goalClone = goalTemplate.content.cloneNode(true);
+      var viewRow = goalClone.querySelector('.view');
+      var foldRow = goalClone.querySelector('[class*="fold"]');
+      tableBody.appendChild(goalClone);
 
-      var blockTd = document.createElement('td'); 
-      blockTd.setAttribute('colspan', 4); bodyBlockRow.appendChild(blockTd);
-      var blockDiv = document.createElement('div'); blockTd.appendChild(blockDiv);
-      var blockTable = document.createElement('table'); blockDiv.appendChild(blockTable);
-      var blockHead = document.createElement('thead'); blockTable.appendChild(blockHead);
-      var blockBody = document.createElement('tbody'); blockTable.appendChild(blockBody);
-      blockTable.classList.add('building-block-table');
-      blockBody.appendChild(createTableButtons(BUTTON_ENUM.BUILDING_BLOCK));
-
-      var commentTable = document.createElement('table'); blockDiv.appendChild(commentTable);
-      var commentHead = document.createElement('thead'); commentTable.appendChild(commentHead);
-      var commentBody = document.createElement('tbody'); commentTable.appendChild(commentBody);
-      var commentColRow = document.createElement('tr'); commentHead.appendChild(commentColRow);
-      var commentColHead = document.createElement('th'); commentColHead.textContent = "Comments";
-      commentColRow.appendChild(commentColHead); commentTable.classList.add('comment-table');
-      commentBody.appendChild(createTableButtons(BUTTON_ENUM.COMMENT));
-
-      //Create Goal rows
+      //Now update elements with tableData
+      var index = 0;
+      var goalTDs = Array.from(viewRow.querySelectorAll('td:not(td:first-of-type)'));
       row.forEach((rowData) => {
-        var rowTd = document.createElement('td');
         if (rowData.key != "BB" && rowData.key != "Comments") {
-          rowTd.textContent = rowData.val();
-          bodyGoalRow.appendChild(rowTd);
-        } else if (rowData.key == "BB") {
-          //Create Building block rows
-          var blockColRow = document.createElement('tr'); blockHead.appendChild(blockColRow);
-          var colIndex = 0;
-          tableData.child("Headers").forEach((col) => {
-            var blockColTh = document.createElement('th');
-            blockColTh.textContent = colIndex === 0 ? "Building Blocks" : col.val();
-            blockColRow.appendChild(blockColTh); colIndex++;
-          });
-
-          rowData.forEach((buildBlock) => {
-            var blockBodyTr = document.createElement('tr'); blockBody.insertBefore(blockBodyTr, blockBody.firstChild);
-            buildBlock.forEach((blockData) => {
-              var blockBodyTd = document.createElement('td'); blockBodyTd.textContent = blockData.val();
-              blockBodyTr.appendChild(blockBodyTd);
-            });
-          });
+          goalTDs[index].textContent = rowData.val();
+        } else if (rowData.key === "BB") {
+          //TODO: Clone BB template then insert forEach
         } else {
-          //Create Comment rows
-          rowData.forEach((comment) => {
-            var commentRow = document.createElement('tr'); commentBody.insertBefore(commentRow, commentBody.firstChild);
-            var commentRowTd = document.createElement('td'); commentRowTd.textContent = comment.val();
-            commentRow.appendChild(commentRowTd);
-          });
+          //TODO: Clone Comment template then insert forEach
         }
+
+        index++;
       });
     });
 
-    //Append rest of elements
-    table.appendChild(tableBody);
-    tableWrap.appendChild(table);
-    semesterLi.appendChild(tableWrap);
   }
 
-  function createTableButtons(buttonToMake) {
+  function createFoldButtons() {
     var button = document.createElement('button');
     var buttonTd = document.createElement('td'); buttonTd.appendChild(button);
-    var elemToReturn = buttonTd;
+    button.className = "fold-btn fas fa-caret-down";
+    return buttonTd;
+  }
 
-    switch (buttonToMake) {
-      case BUTTON_ENUM.BUILDING_BLOCK:
-        var tableRow = document.createElement('tr');
-        var emptyCell = document.createElement('td'); 
-        emptyCell.classList.add('empty-cell');
-        tableRow.appendChild(emptyCell);
-        tableRow.appendChild(emptyCell.cloneNode());
-        button.className = "add-building-block";
-        button.innerHTML = '<i class="fas fa-plus"></i> Add Building Block';
-        tableRow.appendChild(buttonTd); elemToReturn = tableRow;
+  //Context Menu Functions -----------------------------------------
+  const addGoal = document.getElementById('add-goal');
+  const addBuildBlock = document.getElementById('add-build-block');
+  const addComment = document.getElementById('add-comment');
+  const expandFolds = document.getElementById('expand-folds');
+  const closeFolds = document.getElementById('close-folds');
+  const deleteItem = document.getElementById('delete-item');
+  var lastContextTable, lastContextGoal;
+
+  semestersContainer.addEventListener('contextmenu', (e) => {
+    //Allow different actions based on which context is targeted
+    var targetElem = e.target.closest('[data-context]');
+    if (targetElem) {
+      //Initially hide all actions
+      showHideContextAction(addGoal, false);
+      showHideContextAction(addBuildBlock, false);
+      showHideContextAction(addComment, false);
+      showHideContextAction(expandFolds, false);
+      showHideContextAction(closeFolds, false);
+      showHideContextAction(deleteItem, false);
+
+      //Show specific actions
+      switch (targetElem.getAttribute('data-context')) {
+        case 'user-table':
+          lastContextTable = targetElem;
+          showHideContextAction(addGoal, true, 'fa-list-check', 'Add New Goal');
+          showHideContextAction(expandFolds, true, 'fa-caret-up', 'Expand Table Folds');
+          showHideContextAction(closeFolds, true, 'fa-caret-down', 'Close Table Folds');
+          break;
+        case 'user-goal':
+          //Determine which goal is highlighted
+          lastContextGoal = targetElem;
+          var goalList = Array.from(targetElem.parentElement.querySelectorAll('[data-context="user-goal"]'));
+
+          showHideContextAction(addGoal, true, 'fa-list-check', 'Add New Goal');
+          showHideContextAction(deleteItem, true, 'fa-trash', `Delete Goal #${goalList.indexOf(targetElem) + 1}`);
+          break;
+        case 'user-build-block-head':
+          lastContextGoal = targetElem.closest('.fold-open').previousSibling;
+          showHideContextAction(addBuildBlock, true, 'fa-cube', 'Add Building Block');
+          break;
+        case 'user-build-block':
+          //Determine which build block is highlighted
+          lastContextGoal = targetElem.closest('.fold-open').previousSibling;
+          var bbList = Array.from(targetElem.parentElement.children);
+
+          showHideContextAction(addBuildBlock, true, 'fa-cube', 'Add Building Block');
+          showHideContextAction(deleteItem, true, 'fa-trash', `Delete Building Block #${bbList.indexOf(targetElem) + 1}`);
+          break;
+        case 'user-comment-head':
+          lastContextGoal = targetElem.closest('.fold-open').previousSibling;
+          showHideContextAction(addComment, true, 'fa-comment', 'Add New Comment');
+          break;
+        case 'user-comment':
+          //Determine which comment is highlighted
+          lastContextGoal = targetElem.closest('.fold-open').previousSibling;
+          var commentList = Array.from(targetElem.parentElement.children);
+
+          showHideContextAction(addComment, true, 'fa-comment', 'Add New Comment');
+          showHideContextAction(deleteItem, true, 'fa-trash', `Delete Comment #${commentList.indexOf(targetElem) + 1}`);
+          break;
+      }
+
+      showContextMenu(e.clientX, e.clientY);
+      e.preventDefault();
+    }
+  });
+
+  document.addEventListener('mousedown', (e) => {
+    contextMenu.className = '';
+
+    //Context menu actions
+    switch (e.target) {
+      case addGoal:
+        addGoalFunc(lastContextTable);
         break;
-
-      case BUTTON_ENUM.COMMENT:
-        var tableRow = document.createElement('tr'); 
-        button.className = "add-comment";
-        button.innerHTML = '<i class="fas fa-plus"></i> Add Comment';
-        tableRow.appendChild(buttonTd); elemToReturn = tableRow;
+      case addBuildBlock:
+        addBuildBlockFunc(lastContextGoal);
         break;
-
-      case BUTTON_ENUM.FOLDS:
-        button.className = "fold-btn fas fa-caret-down";
-        button.addEventListener('click', () => {
-          var parentTableRowElem = button.parentElement.parentElement;
-          if (button.classList.contains('fa-caret-down')) {
-            button.className = 'fold-btn fas fa-caret-up';
-            parentTableRowElem.nextElementSibling.className = 'fold-open';
-          } else {
-            button.className = 'fold-btn fas fa-caret-down';
-            parentTableRowElem.nextElementSibling.className = 'fold-closed';
-          }
-        });
+      case addComment:
+        addCommentFunc(lastContextGoal);
+        break;
+      case expandFolds:
+        expandFoldsFunc(lastContextTable);
+        break;
+      case closeFolds:
+        closeFoldsFunc(lastContextTable);
+        break;
+      case deleteItem:
+        deleteItemFunc();
         break;
     }
 
-    return elemToReturn;
+    //Carret fold buttons
+    if (e.target.classList.contains('fold-btn')) {
+      var parentTableRowElem = e.target.parentElement.parentElement;
+      if (e.target.classList.contains('fa-caret-down')) {
+        e.target.className = 'fold-btn fas fa-caret-up';
+        parentTableRowElem.nextElementSibling.className = 'fold-open';
+      } else {
+        e.target.className = 'fold-btn fas fa-caret-down';
+        parentTableRowElem.nextElementSibling.className = 'fold-closed';
+      }
+    }
+  });
+
+  document.addEventListener('wheel', () => {
+    contextMenu.className = '';
+  });
+
+  function showContextMenu(posX, posY) {
+    // Get the dimensions of the context menu
+    const menuWidth = contextMenu.offsetWidth;
+    const menuHeight = contextMenu.offsetHeight;
+
+    // Get the dimensions of the viewport
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Adjust posX if the menu would go off the right side of the screen
+    if (posX + menuWidth > viewportWidth) {
+      posX = viewportWidth - menuWidth;
+    }
+
+    // Adjust posY if the menu would go off the bottom of the screen
+    if (posY + menuHeight > viewportHeight) {
+      posY = viewportHeight - menuHeight;
+    }
+
+    // Set the position of the context menu
+    contextMenu.style.top = posY + 'px';
+    contextMenu.style.left = posX + 'px';
+    contextMenu.className = 'show-menu';
   }
+
+  function showHideContextAction(elem, shouldShow, iconClass, actionText) {
+    if (shouldShow) {
+      elem.style.display = 'flex';
+      elem.innerHTML = `<i class="fas ${iconClass}"></i>${actionText}`;
+    } else {
+      elem.style.display = 'none';
+    }
+  }
+
+  //Context Action Functions
+  function addGoalFunc(userTable) {
+    const userTableBody = userTable.querySelector('tbody');
+    const goalTemplate = document.getElementById('template-goal');
+    userTableBody.appendChild(goalTemplate.content.cloneNode(true));
+  }
+
+  function addBuildBlockFunc(userGoal) {
+    const buildBlockTemplate = document.getElementById('template-build-block');
+
+  }
+
+  function addCommentFunc(userGoal) {
+
+  }
+
+  function expandFoldsFunc(userTable) {
+    var foldBtns = userTable.querySelectorAll('.fold-btn');
+    foldBtns.forEach((btn) => {
+      var parentTableRow = btn.parentElement.parentElement;
+      btn.className = 'fold-btn fas fa-caret-up';
+      parentTableRow.nextElementSibling.className = 'fold-open';
+    });
+  }
+
+  function closeFoldsFunc(userTable) {
+    var foldBtns = userTable.querySelectorAll('.fold-btn');
+    foldBtns.forEach((btn) => {
+      var parentTableRow = btn.parentElement.parentElement;
+      btn.className = 'fold-btn fas fa-caret-down';
+      parentTableRow.nextElementSibling.className = 'fold-closed';
+    });
+  }
+
+  function deleteItemFunc(item) {
+
+  }
+  //----------------------------------------------------------------
 }

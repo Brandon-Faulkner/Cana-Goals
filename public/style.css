@@ -4,6 +4,7 @@
     --color-off-white: #e6e6e6;
     --color-light-white: #f8f8f8;
     --color-dark: #2d2d2d;
+    --color-context-menu: #3d3d3d;
     --color-green: #00aa63;
     --color-green-alt: #4fc3a1;
     --color-red: #d53d3d;
@@ -179,6 +180,70 @@ p[contenteditable="plaintext-only"]:hover {
 }
 
 /*#endregion MAIN STYLES*/
+
+/*#region CONTEXT MENU*/
+#context-menu {
+    position: fixed;
+    z-index: 9999;
+    opacity: 0;
+    background: var(--color-context-menu);
+    color: var(--color-fg);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    transition: opacity 150ms;
+    pointer-events: none;
+}
+
+.show-menu {
+    pointer-events: all !important;
+    opacity: 1 !important;
+}
+
+#context-menu span {
+    display: none;
+    gap: 10px;
+    align-items: center;
+    padding: 8px;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: .5px;
+    cursor: pointer;
+    text-wrap: nowrap;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    text-shadow: 3px 4px 7px rgba(0, 0, 0, 0.5);
+    transition: 250ms;
+}
+
+#context-menu span:hover {
+    transform: scale(1.05);
+}
+
+#add-goal {
+    background: var(--color-green);
+}
+
+#add-build-block {
+    background: var(--color-green-alt);
+}
+
+#add-comment {
+    background: var(--scrollbar);
+}
+
+#expand-folds, #close-folds {
+    background: var(--color-gray);
+}
+
+#delete-item {
+    background: var(--color-red);
+}
+
+/*#endregion CONTEXT MENU*/
 
 /*#region SIDEBAR MENU*/
 #menu-holder {
@@ -777,6 +842,12 @@ table td:not(:has(button)) {
     padding: 8px;
     box-shadow: var(--box-shadow);
     white-space: break-spaces;
+}
+
+table td:not(:has(button), .empty-cell):empty:before {
+    content: "Enter Data...";
+    color: rgba(0, 0, 0, 0.5);
+    font-style: italic;
 }
 
 .empty-cell {
