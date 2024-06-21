@@ -135,14 +135,14 @@
 
 <template id="template-goal-focus">
 <div id="goal-focus">
-  <h2></h2>
-  <p class="goal-focus-p" placeholder="Enter Goal Focus..."></p>
+  <h2>Goal Focus</h2>
+  <p contenteditable="plaintext-only" class="goal-focus-p" placeholder="Enter Goal Focus..."></p>
 </div>
 </template>
 
 <template id="template-user-table">
   <div id="userID-table" data-context="user-table">
-    <h2 placeholder="Enter Your Name..."></h2>
+    <h2 contenteditable="plaintext-only" placeholder="Enter Your Name..."></h2>
     <table>
       <thead>
         <tr>
@@ -161,9 +161,9 @@
 <template id="template-goal">
   <tr class="view" data-context="user-goal">
     <td><button class="fold-btn fas fa-caret-down"></button></td>
-    <td placeholder="Goal..."></td>
+    <td contenteditable="plaintext-only" placeholder="Goal..."></td>
     <td placeholder="Due Date..."></td>
-    <td placeholder="Progress..."></td>
+    <td contenteditable="plaintext-only" placeholder="Progress..." style="--prog: 0%;">0</td>
   </tr>
   <tr class="fold-closed">
     <td colspan="4">
@@ -195,15 +195,15 @@
 
 <template id="template-build-block">
   <tr data-context="user-build-block">
-    <td placeholder="Building Block..."></td>
+    <td contenteditable="plaintext-only" placeholder="Building Block..."></td>
     <td placeholder="Due Date..."></td>
-    <td placeholder="Progress...">0</td>
+    <td contenteditable="plaintext-only" placeholder="Progress..." style="--prog: 0%;">0</td>
   </tr>
 </template>
 
 <template id="template-comment">
   <tr data-context="user-comment">
-    <td placeholder="Add a comment..."></td>
+    <td contenteditable="plaintext-only" placeholder="Add a comment..."></td>
   </tr>
 </template>
 

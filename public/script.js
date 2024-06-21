@@ -218,33 +218,42 @@ function continueWithApp() {
 
           //Create menu item tab for the semester
           createSemesterMenuItem(semester.key + ": " + semester.child("Start").val() + " - " + semester.child("End").val());
-        } else {
-          //Get existing li and update goal focus for it
-          semesterLi = semestersContainer.querySelector('[data-semester="' + semester.key + '"]');
-          semesterLi.querySelector(".goal-focus-p").textContent = semester.child("Focus").val();
-        }
 
-        //Make sure tables exist for this semester in the DB
-        if (semester.child("Tables").exists()) {
-          //Create the tables for each user
-          var userHasTable = false;
-          semester.child("Tables").forEach((uid) => {
-            if (uid.key === auth.currentUser.uid) userHasTable = true;
-            createUserTable(semesterLi, uid);
-          });
+          //Create the goal focus for the semester
+          const goalFocusTemplate = document.getElementById("template-goal-focus");
+          const goalFocusClone = goalFocusTemplate.content.cloneNode(true);
+          goalFocusClone.querySelector('.goal-focus-p').textContent = semester.child("Focus").val();
+          semesterLi.insertBefore(goalFocusClone, semesterLi.firstChild);
 
-          //If user doesn't have a table, create one.
-          //Otherwise, move users table above the other ones
-          if (!userHasTable) {
-            createDefaultTable(semesterLi, auth.currentUser.uid);
+          //Make sure tables exist for this semester in the DB
+          if (semester.child("Tables").exists()) {
+            //Create the tables for each user
+            var userHasTable = false;
+            semester.child("Tables").forEach((uid) => {
+              if (uid.key === auth.currentUser.uid) userHasTable = true;
+              createUserTable(semesterLi, uid);
+            });
+
+            //If user doesn't have a table, create one.
+            //Otherwise, move users table above the other ones
+            if (!userHasTable) {
+              createDefaultTable(semesterLi, auth.currentUser.uid);
+            } else {
+              //Get the users table then move to top
+              var usersTable = semesterLi.querySelector(`[id='${auth.currentUser.uid}-table']`);
+              semesterLi.insertBefore(usersTable, semesterLi.querySelector('div:nth-child(2)'));
+            }
           } else {
-            //Get the users table then move to top
-            var usersTable = semesterLi.querySelector(`[id='${auth.currentUser.uid}-table']`);
-            semesterLi.insertBefore(usersTable, semesterLi.firstChild);
+            //No tables exist, create default one for user
+            createDefaultTable(semesterLi, auth.currentUser.uid);
           }
         } else {
-          //No tables exist, create default one for user
-          createDefaultTable(semesterLi, auth.currentUser.uid);
+          //Get existing li and update goal focus for it
+          semesterLi = semestersContainer.querySelector(`[data-semester*="${semester.key}"]`);
+          semesterLi.querySelector(".goal-focus-p").textContent = semester.child("Focus").val();
+
+          //Now update the tables that have changed
+          //TODO---------
         }
       });
     }
@@ -309,6 +318,7 @@ function continueWithApp() {
       var goalTDs = Array.from(viewRow.querySelectorAll('td:not(td:first-of-type)'));
       row.forEach((rowData) => {
         if (rowData.key != "BB" && rowData.key != "Comments") {
+          if (goalIndex === 2) goalTDs[goalIndex].style = `--prog: ${rowData.val()}%;`;
           goalTDs[goalIndex++].textContent = rowData.val();
         } else if (rowData.key === "BB") {
           containsBB = true;
@@ -370,11 +380,11 @@ function continueWithApp() {
     var commentTableBody = foldRow.querySelector('.comment-table tbody');
     commentTableBody.appendChild(commentClone);
 
-    semesterLi.insertBefore(userTableClone, semesterLi.firstChild);
+    semesterLi.insertBefore(userTableClone, semesterLi.querySelector('div:nth-child(2)'));
   }
   //#endregion TABLE CREATION FUNCTIONS
 
-  //#region CONTEXT MENU FUNCTIONS
+  //#region CONTEXT MENU AND TABLE ACTION FUNCTIONS
   const addGoal = document.getElementById('add-goal');
   const expandFolds = document.getElementById('expand-folds');
   const closeFolds = document.getElementById('close-folds');
@@ -384,7 +394,7 @@ function continueWithApp() {
   const deleteItem = document.getElementById('delete-item');
   var lastContextTable, lastContextGoal, lastItemToDelete;
 
-  semestersContainer.addEventListener('contextmenu', (e) => {
+  function handleContextMenu(e) {
     //Allow different actions based on which context is targeted
     var targetElem = e.target.closest('[data-context]');
     if (targetElem) {
@@ -449,10 +459,26 @@ function continueWithApp() {
       showContextMenu(e.clientX, e.clientY);
       e.preventDefault();
     }
+  }
+
+  semestersContainer.addEventListener('contextmenu', (e) => {
+    handleContextMenu(e);
   });
 
+  var lastClick = 0;
   document.addEventListener('mousedown', (e) => {
     contextMenu.className = '';
+
+    //Check if user is double tapping to 
+    //show context menu on mobile devices
+    let date = new Date();
+    let time = date.getTime();
+    const timeBetweenTaps = 200; //200ms
+    if (time - lastClick < timeBetweenTaps) {
+      handleContextMenu(e);
+      document.activeElement.blur();
+    }
+    lastClick = time;
 
     //Context menu actions
     switch (e.target) {
@@ -491,6 +517,28 @@ function continueWithApp() {
 
   document.addEventListener('wheel', () => {
     contextMenu.className = '';
+  });
+
+  var progTimeout;
+  document.addEventListener('keydown', function (e) {
+    if (e.target.getAttribute("placeholder") === "Progress...") {
+      const allowedKeys = ['1','2','3','4','5','6','7','8','9','0','Backspace', 'Delete', 'ArrowLeft', 'ArrowRight'];
+
+      if (!(allowedKeys.includes(e.key))) {
+        e.preventDefault();
+      } else if (e.target.textContent.length >= 3) {
+        e.preventDefault();
+        e.target.textContent = 0;
+      }
+
+      clearTimeout(progTimeout);
+      progTimeout = setTimeout(() => {
+        if (parseInt(e.target.textContent) && parseInt(e.target.textContent) > 100) e.target.textContent = "100";
+        if (e.target.textContent.length === 0 || !parseInt(e.target.textContent)) e.target.textContent = 0;
+        if (e.target.textContent.length > 1) e.target.textContent = parseInt(e.target.textContent);
+        e.target.style = `--prog: ${e.target.textContent}%;`;
+      }, 1000);
+    }
   });
 
   function showContextMenu(posX, posY) {
@@ -581,5 +629,5 @@ function continueWithApp() {
         break;
     }
   }
-  //#endregion CONTEXT MENU FUNCTIONS
+  //#endregion CONTEXT MENU AND TABLE ACTION FUNCTIONS
 }

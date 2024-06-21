@@ -15,10 +15,11 @@
     --color-dark-gray: #494d59;
     --color-light-gray: #b6b8bd;
     --color-gray-hover: #6d717a;
-    --color-placeholder: rgba(0,0,0,0.5);
-    --color-placeholder-light: rgba(255,255,255,0.5);
+    --color-placeholder: rgba(0, 0, 0, 0.5);
+    --color-placeholder-light: rgba(255, 255, 255, 0.5);
     --border-radius: 5px;
     --box-shadow: 0 3px 6px #00000029, 0 3px 6px #0000003b;
+    --box-shadow-table: rgba(0, 0, 0, 0.35) 0px 5px 15px;
 }
 
 [data-theme="light"] {
@@ -55,11 +56,14 @@ body {
     inset: 0;
     position: fixed;
     overflow: overlay;
+    display: flex;
+    flex-direction: column;
 }
 
 header {
     z-index: 1;
     position: sticky;
+    top: 0;
     box-shadow: var(--box-shadow);
     background: var(--color-bg);
 }
@@ -113,18 +117,42 @@ p {
     padding: 5px;
 }
 
+h2[contenteditable]:after,
+p[contenteditable]:after {
+    content: "";
+    display: flex;
+    opacity: 0;
+    width: 100%;
+    height: 3px;
+    border-radius: var(--border-radius);
+    background: var(--color-fg);
+    transition: opacity 250ms;
+}
+
+h2[contenteditable]:hover:after,
+p[contenteditable]:hover:after,
+h2[contenteditable]:focus:after,
+p[contenteditable]:focus:after {
+    opacity: 1;
+}
+
 [placeholder]:empty:before {
     content: attr(placeholder);
     color: var(--color-placeholder);
     font-style: italic;
 }
 
-h2[placeholder]:empty:before {
+h2[placeholder]:empty:before,
+p[placeholder]:empty:before {
     color: var(--h2-placeholder);
 }
 
 [placeholder]:hover {
     cursor: text;
+}
+
+[contenteditable] {
+    outline: 2px solid transparent;
 }
 
 ::-webkit-scrollbar {
@@ -331,7 +359,7 @@ h2[placeholder]:empty:before {
 }
 
 #menu-toggle:checked~.menu-toggle {
-    right: 145px;
+    right: 140px;
 }
 
 #menu-toggle:checked~.menu-toggle .menu-label {
@@ -756,15 +784,11 @@ button[data-tooltip]:active .tooltip {
     padding: 0;
     margin: 0;
     width: 100%;
-    position: absolute;
-    bottom: 0;
     animation: flipdown 0.5s ease both;
 }
 
 #semesters-container li {
-    height: 90vh;
     overflow: overlay;
-    padding-top: 18px;
     animation: flipdown 0.5s ease both;
 }
 
@@ -812,7 +836,7 @@ button[data-tooltip]:active .tooltip {
 /*#region TABLE CONTAINER & TABLES*/
 li>div {
     margin: 50px auto;
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--box-shadow-table);
     background: var(--color-bg);
     width: 95%;
     border-radius: 10px;
@@ -843,6 +867,7 @@ table th {
     padding: 8px;
     min-width: 220px;
     box-shadow: var(--box-shadow);
+    user-select: none;
 }
 
 th:empty {
@@ -862,20 +887,13 @@ table td:not(:has(button)) {
     padding: 8px;
     box-shadow: var(--box-shadow);
     white-space: break-spaces;
+    outline: 2px solid transparent;
+    transition: outline 250ms;
 }
 
-.empty-cell {
-    background: transparent !important;
-    box-shadow: none !important;
-    text-align: right !important;
-}
-
-tr:has(button) {
-    height: 55px;
-}
-
-td:has(button) {
-    text-align: end;
+td[placeholder]:hover,
+td[placeholder]:active {
+    outline: 2px solid var(--color-fg);
 }
 
 /*#region Table Folds*/
@@ -934,110 +952,66 @@ td:has(button) {
     background: var(--table-odd);
 }
 
+/*#endregion Table Folds*/
+
+/*#region Table Actions*/
+td[placeholder="Due Date..."] {
+    text-align: center;
+}
+
+td[placeholder="Progress..."] {
+    --bar: #41B06E;
+    --bg: var(--table-even);
+    background: linear-gradient(to right, var(--bar) 0%,
+            var(--bar) calc(var(--prog) - 10px),
+            transparent calc(var(--prog) - 10px),
+            transparent var(--prog)) center/100% 100%,
+            radial-gradient(circle at calc(var(--prog) - 40px) 50%,
+            var(--bar) 43px,
+            var(--bg) 15px) !important;
+    justify-content: center;
+    text-align: center;
+    display: flex;
+}
+
+.fold-open td[placeholder="Progress..."] {
+    --bg: var(--table-odd);
+}
+
+td[placeholder="Progress..."]:not(:empty):after {
+    content: "%";
+}
+
+table select {
+    font-size: 18px;
+    font-weight: 500;
+    border-radius: 5px;
+    color: var(--color-more-dark);
+    background: var(--table-even);
+    text-align: left;
+    padding: 8px;
+    box-shadow: var(--box-shadow);
+    white-space: break-spaces;
+    outline: 2px solid transparent;
+    transition: outline 250ms;
+    width: 100%;
+}
+
+table .fold-open select {
+    background: var(--table-odd);
+}
+
+select option {
+    font-weight: 500;
+    font-size: 14px;
+}
+
 [data-author]:not(:empty)::before {
     content: "\"";
 }
 
 [data-author]:not(:empty):after {
     content: "\" - Made by " attr(data-author);
-}
-
-/*#endregion Table Folds*/
-
-/*#region Table Actions*/
-.table-date {
-    width: 100%;
-    border: none;
-    appearance: none;
-    outline: none;
-    background: transparent;
-    font-family: 'Futura PT', sans-serif;
-    font-weight: 500;
-    font-size: 18px;
-}
-
-.table-progress-td {
-    background: var(--color-gray-hover) !important;
-    padding: 0 !important;
-    display: flex !important;
-}
-
-.table-progress {
-    height: 100%;
-    min-height: 40.5px;
-    width: 0%;
-    min-width: 35px;
-    background: var(--color-green);
-    border-radius: var(--border-radius);
-    word-wrap: normal;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: thin solid var(--color-dark);
-    transition: all 0.5s ease-out;
-}
-
-.table-progress::after {
-    content: "%";
-}
-
-.table-buttons-holder {
-    height: 60px;
-    width: 100%;
-    display: inline-flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-table button:not(.fold-btn) {
-    height: 35px;
-    cursor: pointer;
-    font-weight: 800;
-    margin-right: 10px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--color-white);
-    transition: all 0.25s ease;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    border: 1px solid transparent;
-}
-
-table button:not(.fold-btn):hover {
-    color: var(--color-dark);
-    transform: scale(1.05);
-}
-
-table button:not(.fold-btn):active {
-    color: var(--color-dark);
-    transform: scale(0.95);
-}
-
-.add-building-block {
-    margin-right: 0;
-    background: var(--color-green-alt);
-}
-
-.add-comment {
-    margin-right: 0;
-    background: var(--scrollbar);
-}
-
-.editable:focus {
-    outline: 2px solid var(--color-off-white);
-}
-
-th[contenteditable="plaintext-only"]:empty:before {
-    content: attr(placeholder);
-    color: rgba(255, 255, 255, 0.5);
-    font-style: italic;
-}
-
-td[contenteditable="plaintext-only"]:empty:before {
-    content: attr(placeholder);
-    color: rgba(0, 0, 0, 0.5);
-    font-style: italic;
 }
 
 /*#endregion Table Actions*/
