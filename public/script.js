@@ -318,8 +318,8 @@ function continueWithApp() {
       var goalTDs = Array.from(viewRow.querySelectorAll('td:not(td:first-of-type)'));
       row.forEach((rowData) => {
         if (rowData.key != "BB" && rowData.key != "Comments") {
-          if (goalIndex === 2) goalTDs[goalIndex].style = `--prog: ${rowData.val()}%;`;
-          goalTDs[goalIndex++].textContent = rowData.val();
+          //if (goalIndex === 2) goalTDs[goalIndex].style = `--prog: ${rowData.val()}%;`;
+          goalTDs[goalIndex++].firstChild.value = rowData.val();
         } else if (rowData.key === "BB") {
           containsBB = true;
           //Clone BB template then update elements
@@ -328,7 +328,7 @@ function continueWithApp() {
             var bbClone = buildBlockTemplate.content.cloneNode(true);
             var bbTDs = Array.from(bbClone.querySelectorAll('td'));
             bbRow.forEach((bbRowData) => {
-              bbTDs[bbIndex++].textContent = bbRowData.val();
+              bbTDs[bbIndex++].firstChild.value = bbRowData.val();
             });
             foldRow.querySelector('.building-block-table tbody').appendChild(bbClone);
           });
@@ -338,7 +338,7 @@ function continueWithApp() {
           rowData.forEach((comment) => {
             var commentClone = commentTemplate.content.cloneNode(true);
             var commentTD = commentClone.querySelector('td');
-            commentTD.textContent = comment.val();
+            commentTD.firstChild.value = comment.val();
             foldRow.querySelector('.comment-table tbody').appendChild(commentClone);
           });
         }
@@ -526,17 +526,17 @@ function continueWithApp() {
 
       if (!(allowedKeys.includes(e.key))) {
         e.preventDefault();
-      } else if (e.target.textContent.length >= 3) {
+      } else if (e.target.value.length >= 3) {
         e.preventDefault();
-        e.target.textContent = 0;
+        e.target.value = 0;
       }
 
       clearTimeout(progTimeout);
       progTimeout = setTimeout(() => {
-        if (parseInt(e.target.textContent) && parseInt(e.target.textContent) > 100) e.target.textContent = "100";
-        if (e.target.textContent.length === 0 || !parseInt(e.target.textContent)) e.target.textContent = 0;
-        if (e.target.textContent.length > 1) e.target.textContent = parseInt(e.target.textContent);
-        e.target.style = `--prog: ${e.target.textContent}%;`;
+        if (parseInt(e.target.value) && parseInt(e.target.value) > 100) e.target.value = "100";
+        if (e.target.value.length === 0 || !parseInt(e.target.value)) e.target.value = 0;
+        if (e.target.value.length > 1) e.target.value = parseInt(e.target.value);
+        e.target.style = `--prog: ${e.target.value}%;`;
       }, 1000);
     }
   });

@@ -884,15 +884,14 @@ table td:not(:has(button)) {
     color: var(--color-more-dark);
     background: var(--table-even);
     text-align: left;
-    padding: 8px;
     box-shadow: var(--box-shadow);
     white-space: break-spaces;
     outline: 2px solid transparent;
     transition: outline 250ms;
 }
 
-td[placeholder]:hover,
-td[placeholder]:active {
+table td:not(:has(button)):hover,
+table td:not(:has(button)):active {
     outline: 2px solid var(--color-fg);
 }
 
@@ -955,11 +954,33 @@ td[placeholder]:active {
 /*#endregion Table Folds*/
 
 /*#region Table Actions*/
-td[placeholder="Due Date..."] {
+td >:first-child {
+    width: 100%;
+    height: 100%;
+    outline: none;
+    appearance: none;
+    resize: none;
+    font-family: 'Futura PT';
+    font-weight: 500;
+    font-size: 18px;
+    background: transparent;
+    border: none;
+    color: var(--color-more-dark);
+    display: inline-table;
+    box-sizing: border-box;
+    border-radius: var(--border-radius);
+    padding: 8px;
+}
+
+td > :first-child[type="date"] {
     text-align: center;
 }
 
-td[placeholder="Progress..."] {
+td:has(> :first-child[type="number"]) {
+    display: flex;
+}
+
+td > :first-child[placeholder="Progress..."] {
     --bar: #41B06E;
     --bg: var(--table-even);
     background: linear-gradient(to right, var(--bar) 0%,
@@ -974,36 +995,12 @@ td[placeholder="Progress..."] {
     display: flex;
 }
 
-.fold-open td[placeholder="Progress..."] {
+.fold-open td > :first-child[placeholder="Progress..."] {
     --bg: var(--table-odd);
 }
 
-td[placeholder="Progress..."]:not(:empty):after {
+td > :first-child[placeholder="Progress..."]:not(:empty):after {
     content: "%";
-}
-
-table select {
-    font-size: 18px;
-    font-weight: 500;
-    border-radius: 5px;
-    color: var(--color-more-dark);
-    background: var(--table-even);
-    text-align: left;
-    padding: 8px;
-    box-shadow: var(--box-shadow);
-    white-space: break-spaces;
-    outline: 2px solid transparent;
-    transition: outline 250ms;
-    width: 100%;
-}
-
-table .fold-open select {
-    background: var(--table-odd);
-}
-
-select option {
-    font-weight: 500;
-    font-size: 14px;
 }
 
 [data-author]:not(:empty)::before {

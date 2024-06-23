@@ -161,9 +161,9 @@
 <template id="template-goal">
   <tr class="view" data-context="user-goal">
     <td><button class="fold-btn fas fa-caret-down"></button></td>
-    <td contenteditable="plaintext-only" placeholder="Goal..."></td>
-    <td placeholder="Due Date..."></td>
-    <td contenteditable="plaintext-only" placeholder="Progress..." style="--prog: 0%;">0</td>
+    <td><textarea placeholder="Goal..."></textarea></td>
+    <td><input type="date"></td>
+    <td><input type="number" placeholder="Progress..."></td>
   </tr>
   <tr class="fold-closed">
     <td colspan="4">
@@ -195,15 +195,15 @@
 
 <template id="template-build-block">
   <tr data-context="user-build-block">
-    <td contenteditable="plaintext-only" placeholder="Building Block..."></td>
-    <td placeholder="Due Date..."></td>
-    <td contenteditable="plaintext-only" placeholder="Progress..." style="--prog: 0%;">0</td>
+    <td><textarea placeholder="Building Block..."></textarea></td>
+    <td><input type="date"></td>
+    <td><input type="number" placeholder="Progress..."></td>
   </tr>
 </template>
 
 <template id="template-comment">
   <tr data-context="user-comment">
-    <td contenteditable="plaintext-only" placeholder="Add a comment..."></td>
+    <td><textarea placeholder="Add a comment..."></textarea></td>
   </tr>
 </template>
 
