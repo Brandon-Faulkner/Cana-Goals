@@ -107,6 +107,14 @@
     <span id="delete-item"></span>
   </div>
 
+  <div id="status-menu">
+    <span id="status-not-working"><i class="fas fa-briefcase"></i>Not Working On</span>
+    <span id="status-working-on"><i class="fas fa-business-time"></i>Working On</span>
+    <span id="status-completed"><i class="fas fa-check-double"></i>Completed</span>
+    <span id="status-waiting"><i class="fas fa-hourglass-half"></i>Waiting</span>
+    <span id="status-stuck"><i class="fas fa-triangle-exclamation"></i>Stuck</span>
+  </div>
+
   <div id="main-page">
     <header>
       <div>
@@ -134,10 +142,10 @@
 </body>
 
 <template id="template-goal-focus">
-<div id="goal-focus">
-  <h2>Goal Focus</h2>
-  <p contenteditable="plaintext-only" class="goal-focus-p" placeholder="Enter Goal Focus..."></p>
-</div>
+  <div id="goal-focus">
+    <h2>Goal Focus</h2>
+    <p contenteditable="plaintext-only" class="goal-focus-p" placeholder="Enter Goal Focus..."></p>
+  </div>
 </template>
 
 <template id="template-user-table">
@@ -161,9 +169,9 @@
 <template id="template-goal">
   <tr class="view" data-context="user-goal">
     <td><button class="fold-btn fas fa-caret-down"></button></td>
-    <td><textarea placeholder="Goal..."></textarea></td>
-    <td><input type="date"></td>
-    <td><input type="number" placeholder="Progress..."></td>
+    <td contenteditable="plaintext-only" placeholder="Goal..."></td>
+    <td><input type="date" class="table-action"></td>
+    <td class="status-input">Not Working On</td>
   </tr>
   <tr class="fold-closed">
     <td colspan="4">
@@ -195,15 +203,15 @@
 
 <template id="template-build-block">
   <tr data-context="user-build-block">
-    <td><textarea placeholder="Building Block..."></textarea></td>
-    <td><input type="date"></td>
-    <td><input type="number" placeholder="Progress..."></td>
+    <td contenteditable="plaintext-only" placeholder="Building Block..."></td>
+    <td><input type="date" class="table-action"></td>
+    <td class="status-input">Not Working On</td>
   </tr>
 </template>
 
 <template id="template-comment">
   <tr data-context="user-comment">
-    <td><textarea placeholder="Add a comment..."></textarea></td>
+    <td contenteditable="plaintext-only" placeholder="Add a comment..."></td>
   </tr>
 </template>
 

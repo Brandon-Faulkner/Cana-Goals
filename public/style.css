@@ -15,6 +15,8 @@
     --color-dark-gray: #494d59;
     --color-light-gray: #b6b8bd;
     --color-gray-hover: #6d717a;
+    --color-status-blue: #1679AB;
+    --color-status-orange: #FF7F3E;
     --color-placeholder: rgba(0, 0, 0, 0.5);
     --color-placeholder-light: rgba(255, 255, 255, 0.5);
     --border-radius: 5px;
@@ -29,6 +31,7 @@
     --table-even: var(--color-off-white);
     --scrollbar: var(--color-light-gray);
     --context-menu-bg: var(--color-light-white);
+    --placeholder-text: var(--color-placeholder-light);
     --h2-placeholder: var(--color-placeholder);
     --menu-background: rgba(255, 255, 255, .8);
 }
@@ -40,6 +43,7 @@
     --table-even: var(--color-light-blue);
     --scrollbar: var(--color-dark-gray);
     --context-menu-bg: var(--color-less-dark);
+    --placeholder-text: var(--color-placeholder);
     --h2-placeholder: var(--color-placeholder-light);
     --menu-background: rgba(45, 45, 45, .8)
 }
@@ -50,6 +54,12 @@ body {
     inset: 0;
     position: fixed;
     -webkit-tap-highlight-color: transparent;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 #main-page {
@@ -123,7 +133,7 @@ p[contenteditable]:after {
     display: flex;
     opacity: 0;
     width: 100%;
-    height: 3px;
+    height: 4px;
     border-radius: var(--border-radius);
     background: var(--color-fg);
     transition: opacity 250ms;
@@ -217,7 +227,7 @@ p[placeholder]:empty:before {
 /*#endregion MAIN STYLES*/
 
 /*#region CONTEXT MENU*/
-#context-menu {
+#context-menu, #status-menu {
     position: fixed;
     z-index: 9999;
     opacity: 0;
@@ -246,7 +256,7 @@ p[placeholder]:empty:before {
     border-radius: var(--border-radius);
 }
 
-#context-menu span {
+#context-menu span, #status-menu span {
     display: flex;
     gap: 10px;
     align-items: center;
@@ -262,7 +272,7 @@ p[placeholder]:empty:before {
     transition: 250ms;
 }
 
-#context-menu span:hover {
+#context-menu span:hover, #status-menu span:hover {
     transform: scale(1.05);
 }
 
@@ -877,7 +887,7 @@ th:empty {
     padding: 0 !important;
 }
 
-table td:not(:has(button)) {
+table td:not(:has(button, table)) {
     font-size: 18px;
     font-weight: 500;
     border-radius: 5px;
@@ -885,13 +895,14 @@ table td:not(:has(button)) {
     background: var(--table-even);
     text-align: left;
     box-shadow: var(--box-shadow);
-    white-space: break-spaces;
+    white-space: normal;
     outline: 2px solid transparent;
     transition: outline 250ms;
+    padding: 8px;
 }
 
-table td:not(:has(button)):hover,
-table td:not(:has(button)):active {
+table td:not(:has(button, table)):hover,
+table td:not(:has(button, table)):active {
     outline: 2px solid var(--color-fg);
 }
 
@@ -935,6 +946,7 @@ table td:not(:has(button)):active {
     background: transparent !important;
     box-shadow: none !important;
     padding: 10px 0 !important;
+    white-space: break-spaces;
 }
 
 .fold-open>td>div {
@@ -954,53 +966,57 @@ table td:not(:has(button)):active {
 /*#endregion Table Folds*/
 
 /*#region Table Actions*/
-td >:first-child {
+.table-action {
     width: 100%;
     height: 100%;
     outline: none;
-    appearance: none;
-    resize: none;
     font-family: 'Futura PT';
     font-weight: 500;
     font-size: 18px;
     background: transparent;
     border: none;
+    text-align: center;
     color: var(--color-more-dark);
-    display: inline-table;
-    box-sizing: border-box;
-    border-radius: var(--border-radius);
-    padding: 8px;
-}
-
-td > :first-child[type="date"] {
-    text-align: center;
-}
-
-td:has(> :first-child[type="number"]) {
     display: flex;
-}
-
-td > :first-child[placeholder="Progress..."] {
-    --bar: #41B06E;
-    --bg: var(--table-even);
-    background: linear-gradient(to right, var(--bar) 0%,
-            var(--bar) calc(var(--prog) - 10px),
-            transparent calc(var(--prog) - 10px),
-            transparent var(--prog)) center/100% 100%,
-            radial-gradient(circle at calc(var(--prog) - 40px) 50%,
-            var(--bar) 43px,
-            var(--bg) 15px) !important;
     justify-content: center;
+    cursor: pointer;
+    border-radius: var(--border-radius);
+}
+
+.status-input {
     text-align: center;
-    display: flex;
+    cursor: pointer;
+    letter-spacing: 1px;
+    user-select: none;
 }
 
-.fold-open td > :first-child[placeholder="Progress..."] {
-    --bg: var(--table-odd);
+td > i {
+    margin-right: 5px;
 }
 
-td > :first-child[placeholder="Progress..."]:not(:empty):after {
-    content: "%";
+#status-not-working {
+    background: var(--table-even);
+    color: var(--color-more-dark);
+}
+
+#status-working-on {
+    background: var(--color-status-blue);
+    color: var(--color-white);
+}
+
+#status-completed {
+    background: var(--color-green);
+    color: var(--color-white);
+}
+
+#status-waiting {
+    background: var(--color-status-orange);
+    color: var(--color-white);
+}
+
+#status-stuck {
+    background: var(--color-red);
+    color: var(--color-white);
 }
 
 [data-author]:not(:empty)::before {

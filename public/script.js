@@ -201,6 +201,7 @@ function continueWithApp() {
   const semestersMenu = document.getElementById('semesters-menu');
   const semestersContainer = document.getElementById('semesters-container');
   const contextMenu = document.getElementById('context-menu');
+  const statusMenu = document.getElementById('status-menu');
 
   //#region TABLE CREATION FUNCTIONS
   var semesterTitlesArr = []; var semesterLi = null;
@@ -318,8 +319,8 @@ function continueWithApp() {
       var goalTDs = Array.from(viewRow.querySelectorAll('td:not(td:first-of-type)'));
       row.forEach((rowData) => {
         if (rowData.key != "BB" && rowData.key != "Comments") {
-          //if (goalIndex === 2) goalTDs[goalIndex].style = `--prog: ${rowData.val()}%;`;
-          goalTDs[goalIndex++].firstChild.value = rowData.val();
+          setCellData(goalTDs[goalIndex], goalIndex, rowData.val());
+          goalIndex++;
         } else if (rowData.key === "BB") {
           containsBB = true;
           //Clone BB template then update elements
@@ -328,7 +329,8 @@ function continueWithApp() {
             var bbClone = buildBlockTemplate.content.cloneNode(true);
             var bbTDs = Array.from(bbClone.querySelectorAll('td'));
             bbRow.forEach((bbRowData) => {
-              bbTDs[bbIndex++].firstChild.value = bbRowData.val();
+              setCellData(bbTDs[bbIndex], bbIndex, bbRowData.val());
+              bbIndex++;
             });
             foldRow.querySelector('.building-block-table tbody').appendChild(bbClone);
           });
@@ -338,7 +340,7 @@ function continueWithApp() {
           rowData.forEach((comment) => {
             var commentClone = commentTemplate.content.cloneNode(true);
             var commentTD = commentClone.querySelector('td');
-            commentTD.firstChild.value = comment.val();
+            commentTD.textContent = comment.val();
             foldRow.querySelector('.comment-table tbody').appendChild(commentClone);
           });
         }
@@ -355,6 +357,21 @@ function continueWithApp() {
         foldRow.querySelector('.comment-table tbody').appendChild(commentClone);
       }
     });
+  }
+
+  function setCellData(cell, index, data) {
+    switch (index) {
+      case 0:
+        cell.textContent = data;
+        break;
+      case 1:
+        cell.firstChild.value = data;
+        break;
+      case 2:
+        cell.firstChild.textContent = data;
+        //TODO-----Change color/icon initially
+        break;
+    }
   }
 
   function createDefaultTable(semesterLi, userID) {
@@ -392,7 +409,7 @@ function continueWithApp() {
   const addBuildBlock = document.getElementById('add-build-block');
   const addComment = document.getElementById('add-comment');
   const deleteItem = document.getElementById('delete-item');
-  var lastContextTable, lastContextGoal, lastItemToDelete;
+  var lastContextTable, lastContextGoal, lastItemToDelete, lastStatusInput;
 
   function handleContextMenu(e) {
     //Allow different actions based on which context is targeted
@@ -456,18 +473,19 @@ function continueWithApp() {
           break;
       }
 
-      showContextMenu(e.clientX, e.clientY);
+      showActionMenu(contextMenu, e.clientX, e.clientY);
       e.preventDefault();
     }
   }
 
   semestersContainer.addEventListener('contextmenu', (e) => {
+    statusMenu.className = '';
     handleContextMenu(e);
   });
 
   var lastClick = 0;
   document.addEventListener('mousedown', (e) => {
-    contextMenu.className = '';
+    statusMenu.className = '';
 
     //Check if user is double tapping to 
     //show context menu on mobile devices
@@ -477,6 +495,8 @@ function continueWithApp() {
     if (time - lastClick < timeBetweenTaps) {
       handleContextMenu(e);
       document.activeElement.blur();
+      lastClick = time;
+      return;
     }
     lastClick = time;
 
@@ -513,38 +533,48 @@ function continueWithApp() {
         parentTableRowElem.nextElementSibling.className = 'fold-closed';
       }
     }
+
+    //Status action menu
+    if (e.target.classList.contains('status-input') && e.button === 0) {
+      lastStatusInput = e.target;
+      showActionMenu(statusMenu, e.clientX, e.clientY);
+    } else {
+      statusMenu.classList.remove('show-menu');
+    }
+
+    if (e.target.parentElement.getAttribute('id') === "status-menu") {
+      lastStatusInput.innerHTML = e.target.innerHTML;
+
+      switch (e.target.getAttribute('id')) {
+        case 'status-not-working':
+          lastStatusInput.style = "color: var(--color-more-dark);";
+          break;
+        case 'status-working-on':
+          lastStatusInput.style = "background: var(--color-status-blue); color: var(--color-white);";
+          break;
+        case 'status-completed':
+          lastStatusInput.style = "background: var(--color-green); color: var(--color-white);";
+          break;
+        case 'status-waiting':
+          lastStatusInput.style = "background: var(--color-status-orange); color: var(--color-white);";
+          break;
+        case 'status-stuck':
+          lastStatusInput.style = "background: var(--color-red); color: var(--color-white);";
+          break;
+      }
+    }
+
+    contextMenu.className = '';
   });
 
   document.addEventListener('wheel', () => {
     contextMenu.className = '';
   });
 
-  var progTimeout;
-  document.addEventListener('keydown', function (e) {
-    if (e.target.getAttribute("placeholder") === "Progress...") {
-      const allowedKeys = ['1','2','3','4','5','6','7','8','9','0','Backspace', 'Delete', 'ArrowLeft', 'ArrowRight'];
-
-      if (!(allowedKeys.includes(e.key))) {
-        e.preventDefault();
-      } else if (e.target.value.length >= 3) {
-        e.preventDefault();
-        e.target.value = 0;
-      }
-
-      clearTimeout(progTimeout);
-      progTimeout = setTimeout(() => {
-        if (parseInt(e.target.value) && parseInt(e.target.value) > 100) e.target.value = "100";
-        if (e.target.value.length === 0 || !parseInt(e.target.value)) e.target.value = 0;
-        if (e.target.value.length > 1) e.target.value = parseInt(e.target.value);
-        e.target.style = `--prog: ${e.target.value}%;`;
-      }, 1000);
-    }
-  });
-
-  function showContextMenu(posX, posY) {
-    // Get the dimensions of the context menu
-    const menuWidth = contextMenu.offsetWidth;
-    const menuHeight = contextMenu.offsetHeight;
+  function showActionMenu(menu, posX, posY) {
+    // Get the dimensions of the menu
+    const menuWidth = menu.offsetWidth;
+    const menuHeight = menu.offsetHeight;
 
     // Get the dimensions of the viewport
     const viewportWidth = window.innerWidth;
@@ -560,10 +590,10 @@ function continueWithApp() {
       posY = viewportHeight - menuHeight;
     }
 
-    // Set the position of the context menu
-    contextMenu.style.top = posY + 'px';
-    contextMenu.style.left = posX + 'px';
-    contextMenu.className = 'show-menu';
+    // Set the position of the menu
+    menu.style.top = posY + 'px';
+    menu.style.left = posX + 'px';
+    menu.className = 'show-menu';
   }
 
   function showHideContextAction(elem, shouldShow, iconClass, actionText) {
