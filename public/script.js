@@ -17,7 +17,8 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
-const STATUS_COLOR = { RED: "var(--color-red)", GREEN: "var(--color-green)" }
+const STATUS_COLOR = { RED: "var(--color-red)", GREEN: "var(--color-green)" };
+const dateRegex = new RegExp(/^(\d{4})(\/|-)(\d{1,2})(\/|-)(\d{1,2})$/gm, 'gm');
 
 function changeSidebarMenuItem(id, text, iClass, color) {
   const elem = document.getElementById(id);
@@ -204,7 +205,7 @@ function continueWithApp() {
   const statusMenu = document.getElementById('status-menu');
 
   //#region TABLE CREATION FUNCTIONS
-  var semesterTitlesArr = []; var semesterLi = null;
+  var semesterTitlesArr = []; var semesterLi = null; var dbAllSemesters;
   onValue(ref(database, 'Semesters/'), (snapshot) => {
     if (snapshot.exists()) {
       snapshot.forEach((semester) => {
@@ -252,9 +253,6 @@ function continueWithApp() {
           //Get existing li and update goal focus for it
           semesterLi = semestersContainer.querySelector(`[data-semester*="${semester.key}"]`);
           semesterLi.querySelector(".goal-focus-p").textContent = semester.child("Focus").val();
-
-          //Now update the tables that have changed
-          //TODO---------
         }
       });
     }
@@ -299,13 +297,49 @@ function continueWithApp() {
     userName.textContent = tableData.child("Name").val();
     semesterLi.appendChild(userTable);
 
+    //Now add all data from tableData into user table
+    const tableBody = tableWrap.querySelector('tbody');
+    insertTableData(tableData, tableBody, semesterLi);
+  }
+
+  function createDefaultTable(semesterLi, userID) {
+    const userTableTemplate = document.getElementById('template-user-table');
+    const userTableClone = userTableTemplate.content.cloneNode(true);
+    const goalTemplate = document.getElementById('template-goal');
+    const goalClone = goalTemplate.content.cloneNode(true);
+    const foldRow = goalClone.querySelector('tr[class*="fold"]');
+    const buildBlockTemplate = document.getElementById('template-build-block');
+    const buildBlockClone = buildBlockTemplate.content.cloneNode(true);
+    const commentTemplate = document.getElementById('template-comment');
+    const commentClone = commentTemplate.content.cloneNode(true);
+
+    var tableWrap = userTableClone.querySelector('div');
+    tableWrap.setAttribute('id', userID + '-table');
+
+    var userTableBody = userTableClone.querySelector('tbody');
+    userTableBody.appendChild(goalClone);
+
+    var buildBlockTableBody = foldRow.querySelector('.building-block-table tbody');
+    buildBlockTableBody.appendChild(buildBlockClone);
+
+    var commentTableBody = foldRow.querySelector('.comment-table tbody');
+    commentTableBody.appendChild(commentClone);
+
+    //Set default semester due date
+    var goalTDs = Array.from(userTableClone.querySelectorAll('.view td:not(td:first-of-type)'));
+    var bbTDs = Array.from(userTableClone.querySelectorAll('.building-block-table td'));
+    setCellData(goalTDs[1], 1, "", semesterLi);
+    setCellData(bbTDs[1], 1, "", semesterLi);
+
+    semesterLi.insertBefore(userTableClone, semesterLi.querySelector('div:nth-child(2)'));
+  }
+
+  function insertTableData(tableData, tableBody, semesterLi) {
     //Template elements
     const goalTemplate = document.getElementById('template-goal');
     const buildBlockTemplate = document.getElementById('template-build-block');
     const commentTemplate = document.getElementById('template-comment');
 
-    //Now add all data from tableData into user table
-    const tableBody = tableWrap.querySelector('tbody');
     tableData.child("Content").forEach((row) => {
       //Clone new goal row to hold all data
       var goalClone = goalTemplate.content.cloneNode(true);
@@ -319,7 +353,7 @@ function continueWithApp() {
       var goalTDs = Array.from(viewRow.querySelectorAll('td:not(td:first-of-type)'));
       row.forEach((rowData) => {
         if (rowData.key != "BB" && rowData.key != "Comments") {
-          setCellData(goalTDs[goalIndex], goalIndex, rowData.val());
+          setCellData(goalTDs[goalIndex], goalIndex, rowData.val(), semesterLi);
           goalIndex++;
         } else if (rowData.key === "BB") {
           containsBB = true;
@@ -329,7 +363,7 @@ function continueWithApp() {
             var bbClone = buildBlockTemplate.content.cloneNode(true);
             var bbTDs = Array.from(bbClone.querySelectorAll('td'));
             bbRow.forEach((bbRowData) => {
-              setCellData(bbTDs[bbIndex], bbIndex, bbRowData.val());
+              setCellData(bbTDs[bbIndex], bbIndex, bbRowData.val(), semesterLi);
               bbIndex++;
             });
             foldRow.querySelector('.building-block-table tbody').appendChild(bbClone);
@@ -359,45 +393,45 @@ function continueWithApp() {
     });
   }
 
-  function setCellData(cell, index, data) {
+  function setCellData(cell, index, data, semesterLi) {
     switch (index) {
       case 0:
         cell.textContent = data;
         break;
       case 1:
-        cell.firstChild.value = data;
+        if (data !== null && dateRegex.test(data)) {
+          cell.firstChild.value = data;
+        } else {
+          //Set default end date
+          var endDate = new Date(semesterLi.getAttribute('data-semester').split("- ")[1]);
+          cell.firstChild.value = endDate.getFullYear() + "-" + ('0' + (endDate.getMonth() + 1)).slice(-2) + "-" + ('0' + endDate.getDate()).slice(-2);
+        }
         break;
       case 2:
-        cell.firstChild.textContent = data;
-        //TODO-----Change color/icon initially
+        switch (data) {
+          case 'Not Working On':
+            cell.innerHTML = `<i class="fas fa-briefcase">${data}`;
+            cell.style = "color: var(--color-more-dark);";
+            break;
+          case 'Working On':
+            cell.innerHTML = `<i class="fas fa-business-time">${data}`;
+            cell.style = "background: var(--color-status-blue); color: var(--color-white);";
+            break;
+          case 'Completed':
+            cell.innerHTML = `<i class="fas fa-check-double">${data}`;
+            cell.style = "background: var(--color-green); color: var(--color-white);";
+            break;
+          case 'Waiting':
+            cell.innerHTML = `<i class="fas fa-hourglass-half">${data}`;
+            cell.style = "background: var(--color-status-orange); color: var(--color-white);";
+            break;
+          case 'Stuck':
+            cell.innerHTML = `<i class="fas fa-triangle-exclamation">${data}`;
+            cell.style = "background: var(--color-red); color: var(--color-white);";
+            break;
+        }
         break;
     }
-  }
-
-  function createDefaultTable(semesterLi, userID) {
-    const userTableTemplate = document.getElementById('template-user-table');
-    const userTableClone = userTableTemplate.content.cloneNode(true);
-    const goalTemplate = document.getElementById('template-goal');
-    const goalClone = goalTemplate.content.cloneNode(true);
-    const foldRow = goalClone.querySelector('tr[class*="fold"]');
-    const buildBlockTemplate = document.getElementById('template-build-block');
-    const buildBlockClone = buildBlockTemplate.content.cloneNode(true);
-    const commentTemplate = document.getElementById('template-comment');
-    const commentClone = commentTemplate.content.cloneNode(true);
-
-    var tableWrap = userTableClone.querySelector('div');
-    tableWrap.setAttribute('id', userID + '-table');
-
-    var userTableBody = userTableClone.querySelector('tbody');
-    userTableBody.appendChild(goalClone);
-
-    var buildBlockTableBody = foldRow.querySelector('.building-block-table tbody');
-    buildBlockTableBody.appendChild(buildBlockClone);
-
-    var commentTableBody = foldRow.querySelector('.comment-table tbody');
-    commentTableBody.appendChild(commentClone);
-
-    semesterLi.insertBefore(userTableClone, semesterLi.querySelector('div:nth-child(2)'));
   }
   //#endregion TABLE CREATION FUNCTIONS
 
@@ -594,6 +628,7 @@ function continueWithApp() {
     menu.style.top = posY + 'px';
     menu.style.left = posX + 'px';
     menu.className = 'show-menu';
+    document.activeElement.blur();
   }
 
   function showHideContextAction(elem, shouldShow, iconClass, actionText) {
@@ -660,4 +695,95 @@ function continueWithApp() {
     }
   }
   //#endregion CONTEXT MENU AND TABLE ACTION FUNCTIONS
+
+  //#region AUTO SAVE FUNCTIONS
+  const AUTO_SAVE_DELAY = 1000;
+  const ALLOW_EDITS_DELAY = 30000;
+  var inputTimeout;
+  var dbUserTime, currUserTime;
+  var dbSemesterEdited, currSemesterEdited;
+  var dbUserTableEdited, currUserTableEdited;
+
+  onValue(ref(database, 'Save System/'), (snapshot) => {
+    snapshot.forEach((uid) => {
+      //Find out the recent changes made from each user from db,
+      //disable input for tables the current user doesnt own that
+      //are being worked on, and update tables with new data
+      const currentTime = new Date().getTime();
+      const timestamp = new Date(uid.child("timestamp").val()).getTime();
+      const semesterEdited = uid.child("semester").val();
+      const tableEdited = uid.child("table").val();
+
+      if (uid.key === auth.currentUser.uid) {
+        dbUserTime = timestamp;
+        dbSemesterEdited = semesterEdited;
+        dbUserTableEdited = tableEdited;
+      } else {
+        const table = document.querySelector(`[data-semester="${semesterEdited}"] [id="${tableEdited}"]`);
+        const timeDiff = Math.abs(currentTime - timestamp);
+        changeTableEditability(table, timeDiff);        
+      }
+    });
+  });
+
+  var allowTableEditTimeout;
+  function changeTableEditability(table, time) {
+    const editSpan = table.querySelector('span');
+
+    //The current user is not allowed to edit the table this user is working on
+    if (time < ALLOW_EDITS_DELAY) {
+      editSpan.style = "opacity: 1";
+
+      clearTimeout(allowTableEditTimeout);
+      allowTableEditTimeout = setTimeout(() => {
+        editSpan.style = "";
+      }, Math.abs(time - ALLOW_EDITS_DELAY));
+    } else {
+      //Editing is now allowed for this table
+      table.style = "";
+    }
+  }
+
+  function updateUserTables(semesterLi, semesterData) {
+    semesterData.child("Tables").forEach((uid) => {
+      var userTableDiv = semesterLi.querySelector(`[id="${uid.key}-table"]`);
+      var userTableBody = userTableDiv.querySelector('tbody');
+
+      //Update name just in case
+      userTableDiv.querySelector('h2').textContent = uid.child('Name').val();
+
+      //Delete everything from table body and reinsert
+      //userTableBody.replaceChildren();
+      //insertTableData(uid, userTableBody, semesterLi);
+    });
+  }
+
+  document.addEventListener('input', (e) => {
+    if (e.target.type !== "radio" && e.target.type !== "checkbox") {
+      //Get the current timestamp and semester
+      currUserTime = new Date().getTime();
+      currSemesterEdited = e.target.closest('[data-semester]').getAttribute('data-semester');
+      currUserTableEdited = e.target.closest('[data-context="user-table"]').getAttribute('id');
+
+      //Check if the currUserTime is > auto save delay of dbUserTime or semester changed
+      if ((Math.abs(currUserTime - dbUserTime) > AUTO_SAVE_DELAY) || 
+      currSemesterEdited !== dbSemesterEdited || dbUserTableEdited !== currUserTableEdited) {
+        //Update database with new timestamp, semester, and user table worked on
+        const saveUpdate = {};
+        saveUpdate[`Save System/${auth.currentUser.uid}/timestamp`] = currUserTime;
+        saveUpdate[`Save System/${auth.currentUser.uid}/semester`] = currSemesterEdited;
+        saveUpdate[`Save System/${auth.currentUser.uid}/table`] = currUserTableEdited;
+        update(ref(database), saveUpdate);
+      }
+
+      //Wait for auto save delay before saving any changes
+      clearTimeout(inputTimeout);
+      inputTimeout = setTimeout(autoSaveData, AUTO_SAVE_DELAY);
+    }
+  });
+
+  function autoSaveData() {
+    console.log("Saving!");
+  }
+  //#endRegion AUTO SAVE FUNCTIONS
 }

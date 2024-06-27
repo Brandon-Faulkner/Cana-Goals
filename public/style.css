@@ -496,6 +496,8 @@ p[placeholder]:empty:before {
 #language-wrapper {
     align-content: unset;
     padding: 60px 10px 10px 10px;
+    height: 75%;
+    max-height: 1000px;
 }
 
 #language-content {
@@ -850,6 +852,17 @@ li>div {
     background: var(--color-bg);
     width: 95%;
     border-radius: 10px;
+}
+
+li>div>span {
+    position: fixed;
+    right: 5%;
+    margin-top: 25px;
+    color: var(--color-green);
+    font-weight: 500;
+    font-size: 14px;
+    pointer-events: none;
+    opacity: 0;
 }
 
 li>div>table {
