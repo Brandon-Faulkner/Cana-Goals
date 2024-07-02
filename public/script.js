@@ -35,18 +35,6 @@ function showNotifToast(title, message, statusColor, isTimed, seconds) {
   const toastProgress = toast.querySelector('.toast-progress');
   const toastClose = toast.querySelector('.toast .close');
 
-  //Check if there are too many toasts: Phone-2, Desktop-4
-  const currToastArr = Array.from(toastHolder.children); 
-  if (window.innerWidth <= 600 || window.innerHeight <= 915) { //Mobile
-    if (currToastArr.length > 2) {
-      //TODO---
-    }
-  } else { //Desktop
-    if (currToastArr.length > 4) {
-      //TODO---
-    }
-  }
-
   //Add the new toast into the toast holder
   toastHolder.insertBefore(toast, toastHolder.firstChild);
 
@@ -76,6 +64,22 @@ function showNotifToast(title, message, statusColor, isTimed, seconds) {
     });
   }
 
+  //Check if there are too many toasts: Phone-2, Desktop-4
+  const currToastArr = Array.from(toastHolder.children);
+  if (window.innerWidth <= 600) { //Mobile
+    if (currToastArr.length > 2) {
+      for (let i = 2; i < currToastArr.length; i++) {
+        currToastArr[i].querySelector('.close').click();
+      }
+    }
+  } else { //Desktop
+    if (currToastArr.length > 4) {
+      for (let i = 4; i < currToastArr.length; i++) {
+        currToastArr[i].querySelector('.close').click();
+      }
+    }
+  }
+
   toastClose.addEventListener('click', function () {
     toastProgress.classList.remove('active');
     toastElem.classList.remove('active');
@@ -84,13 +88,6 @@ function showNotifToast(title, message, statusColor, isTimed, seconds) {
     }, 500);
   });
 }
-
-document.addEventListener('keyup', (e) => {
-  if (e.key === "q") {
-    showNotifToast("Toast Showing Successfully", "The notification toast that you are testing is showing up great on the screen!", STATUS_COLOR.GREEN, false);
-    console.log(`W: ${window.innerWidth}, H: ${window.innerHeight}`);
-  }
-});
 
 window.addEventListener('load', () => {
   //Ensure that the browser supports the service worker API then register it
@@ -539,7 +536,7 @@ async function continueWithApp() {
           var commentList = Array.from(targetElem.parentElement.children);
 
           showHideContextAction(addComment, true, 'fa-comment', 'Add New Comment');
-          if (commentList.length === 1 && commentList[0].textContent.trim() !== "") {
+          if ((targetElem.textContent.trim() === "" && commentList.length > 1) || targetElem.firstElementChild.getAttribute('data-author') === currUserName) {
             showHideContextAction(deleteItem, true, 'fa-trash', `Delete Comment #${commentList.indexOf(targetElem) + 1}`);
             lastItemToDelete = { elem: commentList[commentList.indexOf(targetElem)], type: 'comment' };
           }
@@ -685,13 +682,21 @@ async function continueWithApp() {
   function addGoalFunc(userTable) {
     const userTableBody = userTable.querySelector('tbody');
     const goalTemplate = document.getElementById('template-goal');
-    userTableBody.appendChild(goalTemplate.content.cloneNode(true));
+    const clonedGoal = goalTemplate.content.cloneNode(true);
+    const semester = userTable.closest('[data-semester]');
+    const dateTD = clonedGoal.querySelector('[type="date"]').parentElement;
+    setCellData(dateTD, 1, null, semester);
+    userTableBody.appendChild(clonedGoal);
   }
 
   function addBuildBlockFunc(userGoal) {
     const buildBlockTable = userGoal.nextElementSibling.querySelector('.building-block-table tbody');
     const buildBlockTemplate = document.getElementById('template-build-block');
-    buildBlockTable.appendChild(buildBlockTemplate.content.cloneNode(true));
+    const clonedBuildBlock = buildBlockTemplate.content.cloneNode(true);
+    const semester = userGoal.closest('[data-semester]');
+    const dateTD = clonedBuildBlock.querySelector('[type="date"]').parentElement;
+    setCellData(dateTD, 1, null, semester);
+    buildBlockTable.appendChild(clonedBuildBlock);
   }
 
   function addCommentFunc(userGoal) {
@@ -719,6 +724,10 @@ async function continueWithApp() {
   }
 
   function deleteItemFunc(item) {
+    lastInputEdited = item.elem;
+    currSemesterEdited = item.elem.closest('[data-semester]').getAttribute('data-semester');
+    currUserTableEdited = item.elem.closest('[data-context="user-table"]').getAttribute('id');
+
     switch (item.type) {
       case 'goal':
         item.elem.nextElementSibling.remove();
@@ -734,6 +743,8 @@ async function continueWithApp() {
         item.elem.remove();
         break;
     }
+
+    setTimeout(autoSaveData, AUTO_SAVE_DELAY);
   }
   //#endregion CONTEXT MENU AND TABLE ACTION FUNCTIONS
 
@@ -745,6 +756,7 @@ async function continueWithApp() {
   var dbUserTime, currUserTime;
   var dbSemesterEdited, currSemesterEdited;
   var dbUserTableEdited, currUserTableEdited;
+  const saveStatusDiv = document.getElementById('autosave-status');
 
   onValue(ref(database, 'Save System/'), (snapshot) => {
     snapshot.forEach((uid) => {
@@ -852,6 +864,7 @@ async function continueWithApp() {
       inputTimeout = setTimeout(autoSaveData, AUTO_SAVE_DELAY);
     } else if (e.target.classList.contains('goal-focus-p')) {
       //Handle goal focus update changes
+      currSemesterEdited = e.target.closest('[data-semester]').getAttribute('data-semester');
       lastInputEdited = e.target;
       clearTimeout(inputTimeout);
       inputTimeout = setTimeout(autoSaveData, AUTO_SAVE_DELAY);
@@ -893,7 +906,7 @@ async function continueWithApp() {
       const currAuthor = e.target.getAttribute('data-author');
 
       if (currAuthor === null || currAuthor === currUserName) {
-        e.target.setAttribute('data-author', currUserName);
+          e.target.setAttribute('data-author', currUserName);
       } else {
         //Don't let people edit comments that aren't theirs
         e.preventDefault();
@@ -901,57 +914,101 @@ async function continueWithApp() {
     }
   });
 
-  function autoSaveData() {
-    //Get all table data and then save it to database
-    const table = document.querySelector(`[data-semester="${currSemesterEdited}"] [id="${currUserTableEdited}"]`);
-    const tableBody = table.querySelector('tbody');
-    var goalRowsList = []; var goalCellList = [];
-    var buildBlockRowsList = []; var buildBlockCellList = []; var commentList = [];
-
-    Array.from(tableBody.children).forEach((row) => {
-      goalCellList = [];
-      if (row.className === "view") {
-        //Get goal values 
-        goalCellList.push(row.children[1].textContent);
-        goalCellList.push(row.children[2].firstChild.value);
-        goalCellList.push(row.children[3].textContent);
-
-        //Get build block values
-        buildBlockRowsList = [];
-        var buildBlockRow = row.nextElementSibling.querySelector('.building-block-table tbody');
-        Array.from(buildBlockRow.children).forEach((blockRow) => {
-          buildBlockCellList = [];
-          buildBlockCellList.push(blockRow.children[0].textContent);
-          buildBlockCellList.push(blockRow.children[1].firstChild.value);
-          buildBlockCellList.push(blockRow.children[2].textContent);
-          buildBlockRowsList.push(buildBlockCellList);
-        });
-
-        //Get comment values
-        commentList = [];
-        var commentRow = row.nextElementSibling.querySelector('.comment-table tbody');
-        Array.from(commentRow.children).forEach((commentRow) => {
-          if (commentRow.firstElementChild.textContent.trim() !== "") {
-            commentList.push(`${commentRow.firstElementChild.textContent} - Made by ${commentRow.firstElementChild.getAttribute('data-author')}`);
-          }
-        });
-
-        goalRowsList.push({ 0: goalCellList[0], 1: goalCellList[1], 2: goalCellList[2], BB: buildBlockRowsList, Comments: commentList });
+  document.addEventListener('keyup', (e) => {
+    //Update comments with author
+    if (e.target.getAttribute('placeholder') === "Add a comment...") {
+      //Remove author if input is empty
+      if (e.target.textContent.trim() === "") {
+        e.target.removeAttribute('data-author');
       }
-    });
+    }
+  });
 
-    //Update the table in the database
-    const semesterPath = currSemesterEdited.split(": ")[0];
-    const userID = currUserTableEdited.split("-table")[0];
+  function autoSaveData() {
+    //First update save status div
+    saveStatusDiv.querySelector('p').textContent = "Saving...";
+    saveStatusDiv.querySelector('i').className = "fas fa-spinner";
 
-    const saveUpdate = {};
-    saveUpdate[`Semesters/${semesterPath}/Tables/${userID}/Content`] = goalRowsList;
-    update(ref(database), saveUpdate).then(() => {
-      showNotifToast("Changes Saved", "Your recent changes have been saved.", STATUS_COLOR.GREEN, true, 3);
-    }).catch(() => {
-      const message = "There was an issue saving your data. Please reload the page to get the most recent saved data."
-      showNotifToast("Error Saving Data", message, STATUS_COLOR.RED, false);
-    });
+    if (!lastInputEdited.classList.contains('goal-focus-p')) {
+      //Get all table data and then save it to database
+      const table = document.querySelector(`[data-semester="${currSemesterEdited}"] [id="${currUserTableEdited}"]`);
+      const tableBody = table.querySelector('tbody');
+      var goalRowsList = []; var goalCellList = [];
+      var buildBlockRowsList = []; var buildBlockCellList = []; var commentList = [];
+
+      Array.from(tableBody.children).forEach((row) => {
+        goalCellList = [];
+        if (row.className === "view") {
+          //Get goal values 
+          goalCellList.push(row.children[1].textContent);
+          goalCellList.push(row.children[2].firstChild.value);
+          goalCellList.push(row.children[3].textContent);
+
+          //Get build block values
+          buildBlockRowsList = [];
+          var buildBlockRow = row.nextElementSibling.querySelector('.building-block-table tbody');
+          Array.from(buildBlockRow.children).forEach((blockRow) => {
+            buildBlockCellList = [];
+            buildBlockCellList.push(blockRow.children[0].textContent);
+            buildBlockCellList.push(blockRow.children[1].firstChild.value);
+            buildBlockCellList.push(blockRow.children[2].textContent);
+            buildBlockRowsList.push(buildBlockCellList);
+          });
+
+          //Get comment values
+          commentList = [];
+          var commentRow = row.nextElementSibling.querySelector('.comment-table tbody');
+          Array.from(commentRow.children).forEach((commentRow) => {
+            if (commentRow.firstElementChild.textContent.trim() !== "") {
+              commentList.push(`${commentRow.firstElementChild.textContent} - Made by ${commentRow.firstElementChild.getAttribute('data-author')}`);
+            }
+          });
+
+          goalRowsList.push({ 0: goalCellList[0], 1: goalCellList[1], 2: goalCellList[2], BB: buildBlockRowsList, Comments: commentList });
+        }
+      });
+
+      //Update the table in the database
+      const semesterPath = currSemesterEdited.split(": ")[0];
+      const userID = currUserTableEdited.split("-table")[0];
+
+      const saveUpdate = {};
+      saveUpdate[`Semesters/${semesterPath}/Tables/${userID}/Content`] = goalRowsList;
+      saveUpdate[`Semesters/${semesterPath}/Tables/${userID}/Name`] = table.querySelector('h2').textContent;
+      update(ref(database), saveUpdate).then(() => {
+        showNotifToast("Changes Saved", "Your recent changes have been saved.", STATUS_COLOR.GREEN, true, 4);
+        setTimeout(() => {
+          saveStatusDiv.querySelector('p').textContent = "Up to Date";
+          saveStatusDiv.querySelector('i').className = "fas fa-circle-check";
+        }, 500);
+      }).catch(() => {
+        const message = "There was an issue saving your data. Please reload the page to get the most recent saved data."
+        showNotifToast("Error Saving Data", message, STATUS_COLOR.RED, false);
+        setTimeout(() => {
+          saveStatusDiv.querySelector('p').textContent = "Error with Save";
+          saveStatusDiv.querySelector('i').className = "fas fa-circle-exclamation";
+        }, 500);
+      });
+    } else {
+      //Get the goal focus changes and save to database
+      const semesterPath = currSemesterEdited.split(": ")[0];
+      const saveUpdate = {};
+      saveUpdate[`Semesters/${semesterPath}/Focus`] = lastInputEdited.textContent;
+      update(ref(database), saveUpdate).then(() => {
+        showNotifToast("Changes Saved", "Your recent changes have been saved.", STATUS_COLOR.GREEN, true, 4);
+        setTimeout(() => {
+          saveStatusDiv.querySelector('p').textContent = "Up to Date";
+          saveStatusDiv.querySelector('i').className = "fas fa-circle-check";
+        }, 500);
+      }).catch(() => {
+        const message = "There was an issue saving your data. Please reload the page to get the most recent saved data."
+        showNotifToast("Error Saving Data", message, STATUS_COLOR.RED, false);
+        setTimeout(() => {
+          saveStatusDiv.querySelector('p').textContent = "Error with Save";
+          saveStatusDiv.querySelector('i').className = "fas fa-circle-exclamation";
+        }, 500);
+      });
+    }
   }
   //#endregion AUTO SAVE FUNCTIONS
 }

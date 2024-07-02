@@ -220,6 +220,27 @@ p[placeholder]:empty:before {
     opacity: 1;
 }
 
+#autosave-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--color-fg);
+    margin: auto 2px auto auto;
+}
+
+#autosave-status .fa-spinner {
+    color: var(--color-fg);
+    animation: rotating .75s linear infinite;
+}
+
+#autosave-status .fa-circle-check {
+    color: var(--color-green);
+}
+
+#autosave-status .fa-circle-exclamation {
+    color: var(--color-red);
+}
+
 /*#endregion MAIN STYLES*/
 
 /*#region CONTEXT MENU*/
@@ -299,7 +320,7 @@ p[placeholder]:empty:before {
 #menu-holder {
     display: flex;
     float: right;
-    margin: auto 20px auto auto;
+    margin: auto 20px auto 10px;
 }
 
 .menu-sidebar {
@@ -680,15 +701,12 @@ button[data-tooltip]:active .tooltip {
 #toast-holder {
     display: flex;
     flex-direction: column;
-    height: 35%;
+    height: 50%;
     gap: 10px;
     float: right;
 }
 
 .toast {
-    /*position: absolute;
-    top: 0;
-    right: 0;*/
     border-radius: 10px;
     background: var(--color-bg);
     padding: 20px 35px 20px 25px;
@@ -737,6 +755,7 @@ button[data-tooltip]:active .tooltip {
     color: var(--color-fg);
     overflow: auto;
     overflow-wrap: break-word;
+    max-width: 500px;
 }
 
 .toast-message span.toast-title {
@@ -800,12 +819,14 @@ button[data-tooltip]:active .tooltip {
     padding: 0;
     margin: 0;
     width: 100%;
-    animation: flipdown 0.5s ease both;
 }
 
 #semesters-container li {
     overflow: overlay;
-    animation: flipdown 0.5s ease both;
+}
+
+#semesters-container li > div {
+    animation: flipdown .5s linear both;
 }
 
 .goal-focus-p {
@@ -1082,6 +1103,10 @@ td > i {
 @media (max-width: 435px) {
     #toast-holder {
         width: 100%;
+    }
+
+    #autosave-status p {
+        display: none;
     }
 }
 
