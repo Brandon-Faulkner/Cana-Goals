@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -27,44 +27,70 @@ function changeSidebarMenuItem(id, text, iClass, color) {
 }
 
 function showNotifToast(title, message, statusColor, isTimed, seconds) {
-  const toastElem = document.querySelector('.toast');
-  const toastMessage = document.querySelector('.toast-message');
-  const toastProgress = document.querySelector('.toast-progress');
-  const toastClose = document.querySelector('.toast .close');
+  const toastHolder = document.getElementById('toast-holder');
+  const toastTemplate = document.getElementById('template-toast');
+  const toast = toastTemplate.content.cloneNode(true);
+  const toastElem = toast.querySelector('.toast');
+  const toastMessage = toast.querySelector('.toast-message');
+  const toastProgress = toast.querySelector('.toast-progress');
+  const toastClose = toast.querySelector('.toast .close');
 
-  //Check if toast is active, wait if it is
-  if (toastElem.classList.contains('active')) {
-    setTimeout(() => {
-      showNotifToast(title, message, statusColor, isTimed, seconds);
-    }, 1000);
-  } else {
-    //Change --toast-status css var to statusColor
-    toastElem.style.setProperty('--toast-status', statusColor);
-
-    //Update toast title
-    toastMessage.children[0].textContent = title;
-    toastMessage.children[1].textContent = message;
-
-    //Now show the toast
-    toastElem.classList.add('active');
-
-    //Show the progress bar if isTimed is true
-    if (isTimed === true) {
-      toastProgress.style.setProperty('--toast-duration', seconds + 's');
-      toastProgress.classList.add('active');
-
-      toastProgress.addEventListener("animationend", function () {
-        toastElem.classList.remove('active');
-        toastProgress.classList.remove('active');
-      });
+  //Check if there are too many toasts: Phone-2, Desktop-4
+  const currToastArr = Array.from(toastHolder.children); 
+  if (window.innerWidth <= 600 || window.innerHeight <= 915) { //Mobile
+    if (currToastArr.length > 2) {
+      //TODO---
     }
+  } else { //Desktop
+    if (currToastArr.length > 4) {
+      //TODO---
+    }
+  }
+
+  //Add the new toast into the toast holder
+  toastHolder.insertBefore(toast, toastHolder.firstChild);
+
+  //Change --toast-status css var to statusColor
+  toastElem.style.setProperty('--toast-status', statusColor);
+
+  //Update toast title
+  toastMessage.children[0].textContent = title;
+  toastMessage.children[1].textContent = message;
+
+  //Now show the toast
+  setTimeout(() => {
+    toastElem.classList.add('active');
+  }, 100); //Brief pause to show animation
+
+  //Show the progress bar if isTimed is true
+  if (isTimed === true) {
+    toastProgress.style.setProperty('--toast-duration', seconds + 's');
+    toastProgress.classList.add('active');
+
+    toastProgress.addEventListener("animationend", function () {
+      toastElem.classList.remove('active');
+      toastProgress.classList.remove('active');
+      setTimeout(() => {
+        toastElem.remove();
+      }, 500);
+    });
   }
 
   toastClose.addEventListener('click', function () {
     toastProgress.classList.remove('active');
     toastElem.classList.remove('active');
+    setTimeout(() => {
+      toastElem.remove();
+    }, 500);
   });
 }
+
+document.addEventListener('keyup', (e) => {
+  if (e.key === "q") {
+    showNotifToast("Toast Showing Successfully", "The notification toast that you are testing is showing up great on the screen!", STATUS_COLOR.GREEN, false);
+    console.log(`W: ${window.innerWidth}, H: ${window.innerHeight}`);
+  }
+});
 
 window.addEventListener('load', () => {
   //Ensure that the browser supports the service worker API then register it
@@ -198,13 +224,21 @@ window.addEventListener('load', () => {
   //#endregion LOGIN FUNCTIONS
 });
 
-function continueWithApp() {
+async function continueWithApp() {
   const semestersMenu = document.getElementById('semesters-menu');
   const semestersContainer = document.getElementById('semesters-container');
   const contextMenu = document.getElementById('context-menu');
   const statusMenu = document.getElementById('status-menu');
+  var currUserName;
 
   //#region TABLE CREATION FUNCTIONS
+  await get(ref(database, `User Names/${auth.currentUser.uid}`)).then((snapshot) => {
+    currUserName = snapshot.val();
+  }).catch(() => {
+    const message = "There was an error retrieving your user name from the database. Refresh the page to try again."
+    showNotifToast("Error Retrieving User Name", message, STATUS_COLOR.RED, false);
+  });
+
   var semesterTitlesArr = []; var semesterLi = null; var dbAllSemesters;
   onValue(ref(database, 'Semesters/'), (snapshot) => {
     if (snapshot.exists()) {
@@ -315,6 +349,7 @@ function continueWithApp() {
 
     var tableWrap = userTableClone.querySelector('div');
     tableWrap.setAttribute('id', userID + '-table');
+    tableWrap.querySelector('h2').textContent = currUserName;
 
     var userTableBody = userTableClone.querySelector('tbody');
     userTableBody.appendChild(goalClone);
@@ -374,7 +409,13 @@ function continueWithApp() {
           rowData.forEach((comment) => {
             var commentClone = commentTemplate.content.cloneNode(true);
             var commentTD = commentClone.querySelector('td');
-            commentTD.textContent = comment.val();
+            var commentData = comment.val();
+            if (commentData !== null) {
+              var author = commentData.split(" - Made by ")[1];
+              var message = commentData.split(" - Made by ")[0];
+              commentTD.textContent = message;
+              commentTD.setAttribute('data-author', author);
+            }
             foldRow.querySelector('.comment-table tbody').appendChild(commentClone);
           });
         }
@@ -410,23 +451,23 @@ function continueWithApp() {
       case 2:
         switch (data) {
           case 'Not Working On':
-            cell.innerHTML = `<i class="fas fa-briefcase">${data}`;
+            cell.innerHTML = `<i class="fas fa-circle-xmark"></i>${data}`;
             cell.style = "color: var(--color-more-dark);";
             break;
           case 'Working On':
-            cell.innerHTML = `<i class="fas fa-business-time">${data}`;
+            cell.innerHTML = `<i class="fas fa-briefcase"></i>${data}`;
             cell.style = "background: var(--color-status-blue); color: var(--color-white);";
             break;
           case 'Completed':
-            cell.innerHTML = `<i class="fas fa-check-double">${data}`;
+            cell.innerHTML = `<i class="fas fa-check-double"></i>${data}`;
             cell.style = "background: var(--color-green); color: var(--color-white);";
             break;
           case 'Waiting':
-            cell.innerHTML = `<i class="fas fa-hourglass-half">${data}`;
+            cell.innerHTML = `<i class="fas fa-hourglass-half"></i>${data}`;
             cell.style = "background: var(--color-status-orange); color: var(--color-white);";
             break;
           case 'Stuck':
-            cell.innerHTML = `<i class="fas fa-triangle-exclamation">${data}`;
+            cell.innerHTML = `<i class="fas fa-triangle-exclamation"></i>${data}`;
             cell.style = "background: var(--color-red); color: var(--color-white);";
             break;
         }
@@ -697,9 +738,10 @@ function continueWithApp() {
   //#endregion CONTEXT MENU AND TABLE ACTION FUNCTIONS
 
   //#region AUTO SAVE FUNCTIONS
-  const AUTO_SAVE_DELAY = 1000;
-  const ALLOW_EDITS_DELAY = 30000;
-  var inputTimeout;
+  const AUTO_SAVE_DELAY = 1000; // 1 second
+  const ALLOW_EDITS_DELAY = 30000; //30 seconds
+
+  var inputTimeout, lastInputEdited;
   var dbUserTime, currUserTime;
   var dbSemesterEdited, currSemesterEdited;
   var dbUserTableEdited, currUserTableEdited;
@@ -714,33 +756,63 @@ function continueWithApp() {
       const semesterEdited = uid.child("semester").val();
       const tableEdited = uid.child("table").val();
 
+      //Used to update db later with what the current user is working on
       if (uid.key === auth.currentUser.uid) {
         dbUserTime = timestamp;
         dbSemesterEdited = semesterEdited;
         dbUserTableEdited = tableEdited;
       } else {
+        //Disable the table that this uid is working on
         const table = document.querySelector(`[data-semester="${semesterEdited}"] [id="${tableEdited}"]`);
         const timeDiff = Math.abs(currentTime - timestamp);
-        changeTableEditability(table, timeDiff);        
+        changeTableEditability(table, timeDiff);
       }
     });
   });
 
   var allowTableEditTimeout;
   function changeTableEditability(table, time) {
+    //Get all needed elements
     const editSpan = table.querySelector('span');
+    const editableElems = Array.from(table.querySelectorAll('[contenteditable]'));
+    const inputElems = Array.from(table.querySelectorAll('input'));
+
+    function changeElemsEditability(isEditable) {
+      if (isEditable) {
+        table.removeAttribute("style");
+        editSpan.removeAttribute("style");
+
+        editableElems.forEach((elem) => {
+          elem.setAttribute("contenteditable", "plaintext-only");
+        });
+        inputElems.forEach((elem) => {
+          elem.removeAttribute("disabled");
+        });
+      } else {
+        table.style = "pointer-events: none";
+        editSpan.style = "opacity: 1";
+
+        editableElems.forEach((elem) => {
+          elem.setAttribute("contenteditable", false);
+        });
+        inputElems.forEach((elem) => {
+          elem.setAttribute("disabled", true);
+        });
+      }
+    }
 
     //The current user is not allowed to edit the table this user is working on
     if (time < ALLOW_EDITS_DELAY) {
-      editSpan.style = "opacity: 1";
+      //Change elements to not be editable
+      changeElemsEditability(false);
 
       clearTimeout(allowTableEditTimeout);
       allowTableEditTimeout = setTimeout(() => {
-        editSpan.style = "";
+        changeElemsEditability(true);
       }, Math.abs(time - ALLOW_EDITS_DELAY));
     } else {
-      //Editing is now allowed for this table
-      table.style = "";
+      //Editing is allowed for this table
+      changeElemsEditability(true);
     }
   }
 
@@ -749,9 +821,6 @@ function continueWithApp() {
       var userTableDiv = semesterLi.querySelector(`[id="${uid.key}-table"]`);
       var userTableBody = userTableDiv.querySelector('tbody');
 
-      //Update name just in case
-      userTableDiv.querySelector('h2').textContent = uid.child('Name').val();
-
       //Delete everything from table body and reinsert
       //userTableBody.replaceChildren();
       //insertTableData(uid, userTableBody, semesterLi);
@@ -759,15 +828,50 @@ function continueWithApp() {
   }
 
   document.addEventListener('input', (e) => {
-    if (e.target.type !== "radio" && e.target.type !== "checkbox") {
+    if (e.target.type !== "radio" && e.target.type !== "checkbox" && !e.target.classList.contains('goal-focus-p')) {
+      lastInputEdited = e.target;
+
       //Get the current timestamp and semester
       currUserTime = new Date().getTime();
       currSemesterEdited = e.target.closest('[data-semester]').getAttribute('data-semester');
       currUserTableEdited = e.target.closest('[data-context="user-table"]').getAttribute('id');
 
       //Check if the currUserTime is > auto save delay of dbUserTime or semester changed
-      if ((Math.abs(currUserTime - dbUserTime) > AUTO_SAVE_DELAY) || 
-      currSemesterEdited !== dbSemesterEdited || dbUserTableEdited !== currUserTableEdited) {
+      if ((Math.abs(currUserTime - dbUserTime) > AUTO_SAVE_DELAY) ||
+        currSemesterEdited !== dbSemesterEdited || dbUserTableEdited !== currUserTableEdited) {
+        //Update database with new timestamp, semester, and user table worked on
+        const saveUpdate = {};
+        saveUpdate[`Save System/${auth.currentUser.uid}/timestamp`] = currUserTime;
+        saveUpdate[`Save System/${auth.currentUser.uid}/semester`] = currSemesterEdited;
+        saveUpdate[`Save System/${auth.currentUser.uid}/table`] = currUserTableEdited;
+        update(ref(database), saveUpdate);
+      }
+
+      //Wait for auto save delay before saving any changes
+      clearTimeout(inputTimeout);
+      inputTimeout = setTimeout(autoSaveData, AUTO_SAVE_DELAY);
+    } else if (e.target.classList.contains('goal-focus-p')) {
+      //Handle goal focus update changes
+      lastInputEdited = e.target;
+      clearTimeout(inputTimeout);
+      inputTimeout = setTimeout(autoSaveData, AUTO_SAVE_DELAY);
+    }
+  });
+
+  document.addEventListener('mousedown', (e) => {
+    if (e.target.className === "status-input") {
+      lastInputEdited = e.target;
+    }
+
+    if (e.target.parentElement === statusMenu) {
+      //Get the current timestamp and semester
+      currUserTime = new Date().getTime();
+      currSemesterEdited = lastInputEdited.closest('[data-semester]').getAttribute('data-semester');
+      currUserTableEdited = lastInputEdited.closest('[data-context="user-table"]').getAttribute('id');
+
+      //Check if the currUserTime is > auto save delay of dbUserTime or semester changed
+      if ((Math.abs(currUserTime - dbUserTime) > AUTO_SAVE_DELAY) ||
+        currSemesterEdited !== dbSemesterEdited || dbUserTableEdited !== currUserTableEdited) {
         //Update database with new timestamp, semester, and user table worked on
         const saveUpdate = {};
         saveUpdate[`Save System/${auth.currentUser.uid}/timestamp`] = currUserTime;
@@ -782,8 +886,72 @@ function continueWithApp() {
     }
   });
 
+  document.addEventListener('keydown', (e) => {
+    //Update comments with author
+    if (e.target.getAttribute('placeholder') === "Add a comment...") {
+      //Make sure there isn't already an author on this comment
+      const currAuthor = e.target.getAttribute('data-author');
+
+      if (currAuthor === null || currAuthor === currUserName) {
+        e.target.setAttribute('data-author', currUserName);
+      } else {
+        //Don't let people edit comments that aren't theirs
+        e.preventDefault();
+      }
+    }
+  });
+
   function autoSaveData() {
-    console.log("Saving!");
+    //Get all table data and then save it to database
+    const table = document.querySelector(`[data-semester="${currSemesterEdited}"] [id="${currUserTableEdited}"]`);
+    const tableBody = table.querySelector('tbody');
+    var goalRowsList = []; var goalCellList = [];
+    var buildBlockRowsList = []; var buildBlockCellList = []; var commentList = [];
+
+    Array.from(tableBody.children).forEach((row) => {
+      goalCellList = [];
+      if (row.className === "view") {
+        //Get goal values 
+        goalCellList.push(row.children[1].textContent);
+        goalCellList.push(row.children[2].firstChild.value);
+        goalCellList.push(row.children[3].textContent);
+
+        //Get build block values
+        buildBlockRowsList = [];
+        var buildBlockRow = row.nextElementSibling.querySelector('.building-block-table tbody');
+        Array.from(buildBlockRow.children).forEach((blockRow) => {
+          buildBlockCellList = [];
+          buildBlockCellList.push(blockRow.children[0].textContent);
+          buildBlockCellList.push(blockRow.children[1].firstChild.value);
+          buildBlockCellList.push(blockRow.children[2].textContent);
+          buildBlockRowsList.push(buildBlockCellList);
+        });
+
+        //Get comment values
+        commentList = [];
+        var commentRow = row.nextElementSibling.querySelector('.comment-table tbody');
+        Array.from(commentRow.children).forEach((commentRow) => {
+          if (commentRow.firstElementChild.textContent.trim() !== "") {
+            commentList.push(`${commentRow.firstElementChild.textContent} - Made by ${commentRow.firstElementChild.getAttribute('data-author')}`);
+          }
+        });
+
+        goalRowsList.push({ 0: goalCellList[0], 1: goalCellList[1], 2: goalCellList[2], BB: buildBlockRowsList, Comments: commentList });
+      }
+    });
+
+    //Update the table in the database
+    const semesterPath = currSemesterEdited.split(": ")[0];
+    const userID = currUserTableEdited.split("-table")[0];
+
+    const saveUpdate = {};
+    saveUpdate[`Semesters/${semesterPath}/Tables/${userID}/Content`] = goalRowsList;
+    update(ref(database), saveUpdate).then(() => {
+      showNotifToast("Changes Saved", "Your recent changes have been saved.", STATUS_COLOR.GREEN, true, 3);
+    }).catch(() => {
+      const message = "There was an issue saving your data. Please reload the page to get the most recent saved data."
+      showNotifToast("Error Saving Data", message, STATUS_COLOR.RED, false);
+    });
   }
-  //#endRegion AUTO SAVE FUNCTIONS
+  //#endregion AUTO SAVE FUNCTIONS
 }

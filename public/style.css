@@ -127,7 +127,6 @@ p {
     padding: 5px;
 }
 
-h2[contenteditable]:after,
 p[contenteditable]:after {
     content: "";
     display: flex;
@@ -139,9 +138,7 @@ p[contenteditable]:after {
     transition: opacity 250ms;
 }
 
-h2[contenteditable]:hover:after,
 p[contenteditable]:hover:after,
-h2[contenteditable]:focus:after,
 p[contenteditable]:focus:after {
     opacity: 1;
 }
@@ -152,7 +149,6 @@ p[contenteditable]:focus:after {
     font-style: italic;
 }
 
-h2[placeholder]:empty:before,
 p[placeholder]:empty:before {
     color: var(--h2-placeholder);
 }
@@ -497,7 +493,7 @@ p[placeholder]:empty:before {
     align-content: unset;
     padding: 60px 10px 10px 10px;
     height: 75%;
-    max-height: 1000px;
+    max-height: 750px;
 }
 
 #language-content {
@@ -681,10 +677,18 @@ button[data-tooltip]:active .tooltip {
 /*#endregion TOOLTIPS*/
 
 /*#region NOTIFICATION TOAST*/
+#toast-holder {
+    display: flex;
+    flex-direction: column;
+    height: 35%;
+    gap: 10px;
+    float: right;
+}
+
 .toast {
-    position: absolute;
+    /*position: absolute;
     top: 0;
-    right: 0;
+    right: 0;*/
     border-radius: 10px;
     background: var(--color-bg);
     padding: 20px 35px 20px 25px;
@@ -863,6 +867,8 @@ li>div>span {
     font-size: 14px;
     pointer-events: none;
     opacity: 0;
+    text-transform: uppercase;
+    transition: opacity 250ms;
 }
 
 li>div>table {
@@ -937,6 +943,7 @@ table td:not(:has(button, table)):active {
     border: none;
     font-size: 18px;
     color: var(--color-fg);
+    pointer-events: all;
 }
 
 .fold-btn:hover {
@@ -1069,6 +1076,12 @@ td > i {
 
     .toast {
         left: 0;
+    }
+}
+
+@media (max-width: 435px) {
+    #toast-holder {
+        width: 100%;
     }
 }
 
