@@ -434,6 +434,10 @@ p[placeholder]:empty:before {
     background: var(--color-blue);
 }
 
+#menu-semester {
+    background: var(--color-dark-gray);
+}
+
 /*#endregion SIDEBAR MENU*/
 
 /*#region SEMESTER MENU*/
@@ -480,9 +484,10 @@ p[placeholder]:empty:before {
 
 /*#endregion SEMESTER MENU*/
 
-/*#region LOGIN/LANGUAGE SCREEN*/
+/*#region LOGIN/LANGUAGE/ADD SEMESTER SCREEN*/
 #login-page,
-#language-page {
+#language-page,
+#add-semester-page {
     height: 100%;
     width: 100%;
     z-index: 898;
@@ -494,7 +499,8 @@ p[placeholder]:empty:before {
 }
 
 #login-wrapper,
-#language-wrapper {
+#language-wrapper,
+#add-semester-wrapper {
     width: 90%;
     max-width: 600px;
     height: 50%;
@@ -517,11 +523,32 @@ p[placeholder]:empty:before {
     max-height: 750px;
 }
 
+#add-semester-wrapper {
+    height: 75%;
+    max-height: 550px;
+}
+
 #language-content {
     overflow: overlay;
 }
 
-#login-title {
+#add-semester-content {
+    overflow: overlay;
+    display: inline-grid;
+    margin: 20px 0;
+}
+
+#add-semester-content label {
+    display: flex;
+    width: 80%;
+    max-width: 400px;
+    justify-self: center;
+    margin: 15px 0 -15px 0;
+    font-weight: 500;
+}
+
+#login-title,
+#add-semester-title {
     display: flex;
     width: 100%;
     font-size: 35px;
@@ -550,6 +577,7 @@ p[placeholder]:empty:before {
     border: 1px solid var(--color-light-gray);
     border-bottom-width: 2px;
     font-size: 17px;
+    font-family: 'Futura PT', sans-serif;
     transition: all 0.3s ease;
 }
 
@@ -561,10 +589,6 @@ p[placeholder]:empty:before {
 .login-field input::placeholder {
     color: var(--color-light-gray);
     transition: all 0.3s ease;
-}
-
-form .field input:focus::placeholder {
-    color: var(--color-green);
 }
 
 .eye-icon {
@@ -580,7 +604,8 @@ form .field input:focus::placeholder {
     cursor: pointer;
 }
 
-#login-button {
+#login-button,
+#add-semester-submit {
     height: 50px;
     width: 100%;
     max-width: 200px;
@@ -597,7 +622,8 @@ form .field input:focus::placeholder {
     justify-self: center;
 }
 
-#login-button:hover {
+#login-button:hover,
+#add-semester-submit:hover {
     background: var(--color-green-alt);
 }
 
@@ -627,7 +653,7 @@ form .field input:focus::placeholder {
     }
 }
 
-/*#endregion LOGIN SCREEN*/
+/*#endregion LOGIN/LANGUAGE/ADD SEMESTER SCREEN*/
 
 /*#region TOOLTIPS*/
 [data-tooltip] .tooltip {

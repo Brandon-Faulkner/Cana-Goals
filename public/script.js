@@ -226,19 +226,83 @@ async function continueWithApp() {
   const semestersContainer = document.getElementById('semesters-container');
   const contextMenu = document.getElementById('context-menu');
   const statusMenu = document.getElementById('status-menu');
-  var currUserName;
+  var currUserName, isUserAdmin;
 
   //#region TABLE CREATION FUNCTIONS
-  await get(ref(database, `User Names/${auth.currentUser.uid}`)).then((snapshot) => {
-    currUserName = snapshot.val();
+  await get(ref(database, `Users/${auth.currentUser.uid}/`)).then((snapshot) => {
+    currUserName = snapshot.child("Name").val();
+    isUserAdmin = snapshot.child("isAdmin").val();
+    createAddSemesterMenuItem(isUserAdmin);
   }).catch(() => {
-    const message = "There was an error retrieving your user name from the database. Refresh the page to try again."
-    showNotifToast("Error Retrieving User Name", message, STATUS_COLOR.RED, false);
+    const message = "There was an error retrieving your info from the database. Refresh the page to try again."
+    showNotifToast("Error Retrieving Info", message, STATUS_COLOR.RED, false);
   });
+
+  //Add semester menu item
+  function createAddSemesterMenuItem(isAdmin) {
+    if (isAdmin) {
+      const addSemesterScreen = document.getElementById('add-semester-page');
+      const addSemesterClose = document.getElementById('add-semester-close');
+      const addSemesterName = document.getElementById('add-semester-name');
+      const addSemesterStart = document.getElementById('add-semester-start'); 
+      const addSemesterEnd = document.getElementById('add-semester-end'); 
+      const addSemesterSubmit = document.getElementById('add-semester-submit');  
+
+      const sideMenuToggle = document.getElementById("menu-toggle");
+      const menuSidebar = document.querySelector('.menu-sidebar');
+      const menuSemester = document.createElement('span');   
+
+      menuSemester.setAttribute('id', 'menu-semester');
+      menuSemester.innerHTML = "Add Semester<i class=\"fas fa-calendar-plus\"></i>";
+      menuSidebar.appendChild(menuSemester);
+
+      menuSemester.addEventListener('click', function () {
+        addSemesterScreen.classList.add('pop-up');
+        sideMenuToggle.checked = false;
+      });
+
+      addSemesterClose.addEventListener('click', function () {
+        addSemesterScreen.classList.remove('pop-up');
+      });
+
+      addSemesterSubmit.addEventListener('click', function () {
+        //Check if inputs are empty
+        if (addSemesterName.value.trim() !== "" && Date.parse(addSemesterStart.value) && Date.parse(addSemesterEnd.value)) {
+          //Inputs are good, submit to database and then show toast
+          addSemesterSubmit.classList.add('login-click');
+
+          const startDate = new Date(addSemesterStart.value);
+          const endDate = new Date(addSemesterEnd.value);
+          const startString = `${startDate.getMonth() + 1}/${startDate.getDate()}/${startDate.getFullYear().toString().slice(2)}`;
+          const endString = `${endDate.getMonth() + 1}/${endDate.getDate()}/${endDate.getFullYear().toString().slice(2)}`;
+
+          set(ref(database, `Semesters/${addSemesterName.value}`), {
+            End: endString,
+            Focus: "",
+            Start: startString
+          }).then(() => {
+            addSemesterClose.click();
+            addSemesterSubmit.classList.remove('login-click');
+            addSemesterName.value = null;
+            addSemesterStart.value = null;
+            addSemesterEnd.value = null;
+            showNotifToast("Semester Added", "New semester has been successfully added.", STATUS_COLOR.GREEN, true, 4); 
+          }).catch(() => {
+            addSemesterSubmit.classList.remove('login-click');
+            showNotifToast("Error Adding Semester", "There was an issue adding this semester. Please try again.", STATUS_COLOR.RED, true, 4);
+          });
+        } else {
+          //Inputs are empty, show error
+          showNotifToast("Missing Information", "Please fill in all info for the new semester.", STATUS_COLOR.RED, true, 4);
+        }
+      });
+    }
+  }
 
   var semesterTitlesArr = []; var semesterLi = null; var dbAllSemesters;
   onValue(ref(database, 'Semesters/'), (snapshot) => {
     if (snapshot.exists()) {
+      dbAllSemesters = snapshot;
       snapshot.forEach((semester) => {
         //Check if this semester has already been handled
         if (!semesterTitlesArr.includes(semester.key)) {
@@ -545,8 +609,11 @@ async function continueWithApp() {
           break;
       }
 
-      showActionMenu(contextMenu, e.clientX, e.clientY);
-      e.preventDefault();
+      //Only show if context menu is allowed. ie: table is not being edited
+      if (lastContextTable.getAttribute("style") !== "pointer-events: none;") {
+        showActionMenu(contextMenu, e.clientX, e.clientY);
+        e.preventDefault();
+      }
     }
   }
 
@@ -820,7 +887,11 @@ async function continueWithApp() {
 
       clearTimeout(allowTableEditTimeout);
       allowTableEditTimeout = setTimeout(() => {
-        changeElemsEditability(true);
+        //Update the table with any new data
+        const semesterLi = table.closest('[data-semester]');
+        updateUserTable(semesterLi, dbAllSemesters, table);
+        table.removeAttribute("style");
+        editSpan.removeAttribute("style");
       }, Math.abs(time - ALLOW_EDITS_DELAY));
     } else {
       //Editing is allowed for this table
@@ -828,19 +899,26 @@ async function continueWithApp() {
     }
   }
 
-  function updateUserTables(semesterLi, semesterData) {
-    semesterData.child("Tables").forEach((uid) => {
-      var userTableDiv = semesterLi.querySelector(`[id="${uid.key}-table"]`);
-      var userTableBody = userTableDiv.querySelector('tbody');
+  function updateUserTable(semesterLi, allSemestersData, table) {
+    //First get the semester name / semester data
+    const semesterName = semesterLi.getAttribute('data-semester').split(": ")[0];
+    const semesterData = allSemestersData.child(semesterName);
 
-      //Delete everything from table body and reinsert
-      //userTableBody.replaceChildren();
-      //insertTableData(uid, userTableBody, semesterLi);
-    });
+    //Change table data for the specific table
+    const uid = table.getAttribute("id").split("-table")[0];
+    const tableData = semesterData.child("Tables").child(uid);
+
+    var userTableDiv = semesterLi.querySelector(`[id="${uid}-table"]`);
+    var userTableBody = userTableDiv.querySelector('tbody');
+
+    //Delete everything from table body and reinsert
+    userTableBody.replaceChildren();
+    insertTableData(tableData, userTableBody, semesterLi);
   }
 
   document.addEventListener('input', (e) => {
-    if (e.target.type !== "radio" && e.target.type !== "checkbox" && !e.target.classList.contains('goal-focus-p')) {
+    if (e.target.type !== "radio" && e.target.type !== "checkbox" 
+      && !e.target.classList.contains('goal-focus-p') && !e.target.parentElement.classList.contains('login-field')) {
       lastInputEdited = e.target;
 
       //Get the current timestamp and semester
@@ -906,7 +984,7 @@ async function continueWithApp() {
       const currAuthor = e.target.getAttribute('data-author');
 
       if (currAuthor === null || currAuthor === currUserName) {
-          e.target.setAttribute('data-author', currUserName);
+        e.target.setAttribute('data-author', currUserName);
       } else {
         //Don't let people edit comments that aren't theirs
         e.preventDefault();
