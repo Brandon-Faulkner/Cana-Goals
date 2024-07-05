@@ -1086,6 +1086,48 @@ td > i {
     color: var(--color-white);
 }
 
+tr[data-context="user-comment"] {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+td[placeholder="Add a comment..."] {
+    width: 100%;
+}
+
+.comment-submit{
+    width: 72px;
+    display: flex;
+    margin-left: 5px;
+    padding: 6px;
+    font-size: 20px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--color-green);
+    color: var(--color-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    text-shadow: 3px 4px 7px rgba(0, 0, 0, 0.5);
+    transition: 250ms;
+}
+
+.comment-submit:after {
+    content: "Submit";
+}
+
+.comment-submit:hover {
+    transform: scale(1.05);
+}
+
+.comment-submit:active {
+    transform: scale(0.95);
+}
+
+tr[data-context="user-comment"]:has(td:empty) .comment-submit {
+    display: none;
+}
+
 [data-author]:not(:empty)::before {
     content: "\"";
 }

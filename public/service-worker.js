@@ -11,18 +11,6 @@ Copyright 2015, 2019 Google Inc. All Rights Reserved.
  limitations under the License.
 */
 
-importScripts("https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js");
-
-firebase.initializeApp({
-  apiKey: "AIzaSyDDYuTQDXbkmGM73f-mBCghdLeTsXLoS9Q",
-  authDomain: "cana-goals.firebaseapp.com",
-  projectId: "cana-goals",
-  storageBucket: "cana-goals.appspot.com",
-  messagingSenderId: "77801609796",
-  appId: "1:77801609796:web:da20da804555c984113a11",
-  measurementId: "G-54LFB530MD"
-});
-
 //#region ORIGINAL CODE FROM AUTHOR
 // Incrementing OFFLINE_VERSION will kick off the install event and force
 // previously cached resources to be updated from the network.

@@ -17,6 +17,13 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
+// Initialize EmailJS
+(function () {
+  emailjs.init({
+    publicKey: "4vKNUp2KiBM7q1yHl"
+  });
+})();
+
 const STATUS_COLOR = { RED: "var(--color-red)", GREEN: "var(--color-green)" };
 const dateRegex = new RegExp(/^(\d{4})(\/|-)(\d{1,2})(\/|-)(\d{1,2})$/gm, 'gm');
 
@@ -226,12 +233,13 @@ async function continueWithApp() {
   const semestersContainer = document.getElementById('semesters-container');
   const contextMenu = document.getElementById('context-menu');
   const statusMenu = document.getElementById('status-menu');
-  var currUserName, isUserAdmin;
+  var currUserName, isUserAdmin, allUserEmails;
 
   //#region TABLE CREATION FUNCTIONS
-  await get(ref(database, `Users/${auth.currentUser.uid}/`)).then((snapshot) => {
-    currUserName = snapshot.child("Name").val();
-    isUserAdmin = snapshot.child("isAdmin").val();
+  await get(ref(database, `Users/`)).then((snapshot) => {
+    allUserEmails = snapshot;
+    currUserName = snapshot.child(auth.currentUser.uid).child("Name").val();
+    isUserAdmin = snapshot.child(auth.currentUser.uid).child("isAdmin").val();
     createAddSemesterMenuItem(isUserAdmin);
   }).catch(() => {
     const message = "There was an error retrieving your info from the database. Refresh the page to try again."
@@ -244,13 +252,13 @@ async function continueWithApp() {
       const addSemesterScreen = document.getElementById('add-semester-page');
       const addSemesterClose = document.getElementById('add-semester-close');
       const addSemesterName = document.getElementById('add-semester-name');
-      const addSemesterStart = document.getElementById('add-semester-start'); 
-      const addSemesterEnd = document.getElementById('add-semester-end'); 
-      const addSemesterSubmit = document.getElementById('add-semester-submit');  
+      const addSemesterStart = document.getElementById('add-semester-start');
+      const addSemesterEnd = document.getElementById('add-semester-end');
+      const addSemesterSubmit = document.getElementById('add-semester-submit');
 
       const sideMenuToggle = document.getElementById("menu-toggle");
       const menuSidebar = document.querySelector('.menu-sidebar');
-      const menuSemester = document.createElement('span');   
+      const menuSemester = document.createElement('span');
 
       menuSemester.setAttribute('id', 'menu-semester');
       menuSemester.innerHTML = "Add Semester<i class=\"fas fa-calendar-plus\"></i>";
@@ -286,7 +294,7 @@ async function continueWithApp() {
             addSemesterName.value = null;
             addSemesterStart.value = null;
             addSemesterEnd.value = null;
-            showNotifToast("Semester Added", "New semester has been successfully added.", STATUS_COLOR.GREEN, true, 4); 
+            showNotifToast("Semester Added", "New semester has been successfully added.", STATUS_COLOR.GREEN, true, 4);
           }).catch(() => {
             addSemesterSubmit.classList.remove('login-click');
             showNotifToast("Error Adding Semester", "There was an issue adding this semester. Please try again.", STATUS_COLOR.RED, true, 4);
@@ -917,8 +925,9 @@ async function continueWithApp() {
   }
 
   document.addEventListener('input', (e) => {
-    if (e.target.type !== "radio" && e.target.type !== "checkbox" 
-      && !e.target.classList.contains('goal-focus-p') && !e.target.parentElement.classList.contains('login-field')) {
+    if (e.target.type !== "radio" && e.target.type !== "checkbox"
+      && !e.target.classList.contains('goal-focus-p') && !e.target.parentElement.classList.contains('login-field')
+      && !e.target.getAttribute('placeholder') === "Add a comment...") {
       lastInputEdited = e.target;
 
       //Get the current timestamp and semester
@@ -950,11 +959,11 @@ async function continueWithApp() {
   });
 
   document.addEventListener('mousedown', (e) => {
-    if (e.target.className === "status-input") {
+    if (e.target.className === "status-input" || e.target.className === "comment-submit") {
       lastInputEdited = e.target;
     }
 
-    if (e.target.parentElement === statusMenu) {
+    if (e.target.parentElement === statusMenu || e.target.className === 'comment-submit') {
       //Get the current timestamp and semester
       currUserTime = new Date().getTime();
       currSemesterEdited = lastInputEdited.closest('[data-semester]').getAttribute('data-semester');
@@ -974,6 +983,43 @@ async function continueWithApp() {
       //Wait for auto save delay before saving any changes
       clearTimeout(inputTimeout);
       inputTimeout = setTimeout(autoSaveData, AUTO_SAVE_DELAY);
+
+      //Send an email if user just submitted a comment and it isn't their own table
+      if (e.target.className === 'comment-submit') {
+        const userID = currUserTableEdited.split("-table")[0];
+        if (userID !== auth.currentUser.uid) {
+          const userEmail = allUserEmails.child(userID).child("Email").val();
+          const userName = allUserEmails.child(userID).child("Name").val();
+          const commentMessage = lastInputEdited.previousElementSibling.textContent;
+
+          //Get the goal associated with this comment
+          const foldRow = lastInputEdited.closest('[class*="fold"]');
+          const goalRow = foldRow.previousElementSibling;
+          const goalContent = goalRow.querySelector('[placeholder="Goal..."]').textContent;
+
+          //Construct the email parameters
+          const emailParams = {
+            to_email: userEmail,
+            to_name: userName,
+            comment_name: currUserName,
+            message: commentMessage,
+            goal_content: goalContent,
+            semester: currSemesterEdited
+          };
+
+          //Send the email
+          emailjs.send('service_goals', 'template_goals', emailParams).then(
+            (response) => {
+              showNotifToast("Comment Submitted", `${userName} has been notified of your comment.`, STATUS_COLOR.GREEN, true, 6);
+            },
+            (error) => {
+              console.log(`Email Error: ${error}`);
+            }
+          );
+        }
+        //Remove the submit button
+        e.target.remove();
+      }
     }
   });
 
@@ -985,6 +1031,12 @@ async function continueWithApp() {
 
       if (currAuthor === null || currAuthor === currUserName) {
         e.target.setAttribute('data-author', currUserName);
+        //Add a submit button if it doesn't exist
+        if (!e.target.parentElement.querySelector('.comment-submit')) {
+          const commentSubmit = document.createElement('span');
+          commentSubmit.classList.add('comment-submit');
+          e.target.parentElement.appendChild(commentSubmit);
+        }
       } else {
         //Don't let people edit comments that aren't theirs
         e.preventDefault();
@@ -998,6 +1050,14 @@ async function continueWithApp() {
       //Remove author if input is empty
       if (e.target.textContent.trim() === "") {
         e.target.removeAttribute('data-author');
+        //Remove submit button
+        const commentSubmit = e.target.parentElement.querySelector('.comment-submit');
+        if (commentSubmit) commentSubmit.remove();
+        //Save the removal of the comment to db
+        lastInputEdited = e.target;
+        currSemesterEdited = lastInputEdited.closest('[data-semester]').getAttribute('data-semester');
+        currUserTableEdited = lastInputEdited.closest('[data-context="user-table"]').getAttribute('id');
+        autoSaveData();
       }
     }
   });
