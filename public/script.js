@@ -29,7 +29,7 @@ const dateRegex = new RegExp(/^(\d{4})(\/|-)(\d{1,2})(\/|-)(\d{1,2})$/gm, 'gm');
 
 function changeSidebarMenuItem(id, text, iClass, color) {
   const elem = document.getElementById(id);
-  elem.innerHTML = text + " <i class=\"fas " + iClass + "\"></i>";
+  elem.innerHTML = `<i class=\"fas ${iClass}\"></i>${text}`;
   if (color) elem.style.background = color;
 }
 
@@ -261,7 +261,7 @@ async function continueWithApp() {
       const menuSemester = document.createElement('span');
 
       menuSemester.setAttribute('id', 'menu-semester');
-      menuSemester.innerHTML = "Add Semester<i class=\"fas fa-calendar-plus\"></i>";
+      menuSemester.innerHTML = "<i class=\"fas fa-calendar-plus\"></i>Add Semester";
       menuSidebar.appendChild(menuSemester);
 
       menuSemester.addEventListener('click', function () {
@@ -276,29 +276,33 @@ async function continueWithApp() {
       addSemesterSubmit.addEventListener('click', function () {
         //Check if inputs are empty
         if (addSemesterName.value.trim() !== "" && Date.parse(addSemesterStart.value) && Date.parse(addSemesterEnd.value)) {
-          //Inputs are good, submit to database and then show toast
-          addSemesterSubmit.classList.add('login-click');
+          //Inputs are valid, check if semester name already exists, else submit to database and then show toast
+          if (dbAllSemesters.child(addSemesterName.value.trim()).exists()) {
+            showNotifToast("Error Adding Semester", "A semester with this name already exists. Please choose another name.", STATUS_COLOR.RED, true, 6);
+          } else {
+            addSemesterSubmit.classList.add('login-click');
 
-          const startDate = new Date(addSemesterStart.value);
-          const endDate = new Date(addSemesterEnd.value);
-          const startString = `${startDate.getMonth() + 1}/${startDate.getDate()}/${startDate.getFullYear().toString().slice(2)}`;
-          const endString = `${endDate.getMonth() + 1}/${endDate.getDate()}/${endDate.getFullYear().toString().slice(2)}`;
+            const startDate = new Date(addSemesterStart.value);
+            const endDate = new Date(addSemesterEnd.value);
+            const startString = `${startDate.getMonth() + 1}/${startDate.getDate()}/${startDate.getFullYear().toString().slice(2)}`;
+            const endString = `${endDate.getMonth() + 1}/${endDate.getDate()}/${endDate.getFullYear().toString().slice(2)}`;
 
-          set(ref(database, `Semesters/${addSemesterName.value}`), {
-            End: endString,
-            Focus: "",
-            Start: startString
-          }).then(() => {
-            addSemesterClose.click();
-            addSemesterSubmit.classList.remove('login-click');
-            addSemesterName.value = null;
-            addSemesterStart.value = null;
-            addSemesterEnd.value = null;
-            showNotifToast("Semester Added", "New semester has been successfully added.", STATUS_COLOR.GREEN, true, 4);
-          }).catch(() => {
-            addSemesterSubmit.classList.remove('login-click');
-            showNotifToast("Error Adding Semester", "There was an issue adding this semester. Please try again.", STATUS_COLOR.RED, true, 4);
-          });
+            set(ref(database, `Semesters/${addSemesterName.value}`), {
+              End: endString,
+              Focus: "",
+              Start: startString
+            }).then(() => {
+              addSemesterClose.click();
+              addSemesterSubmit.classList.remove('login-click');
+              addSemesterName.value = null;
+              addSemesterStart.value = null;
+              addSemesterEnd.value = null;
+              showNotifToast("Semester Added", "New semester has been successfully added.", STATUS_COLOR.GREEN, true, 4);
+            }).catch(() => {
+              addSemesterSubmit.classList.remove('login-click');
+              showNotifToast("Error Adding Semester", "There was an issue adding this semester. Please try again.", STATUS_COLOR.RED, true, 4);
+            });
+          }
         } else {
           //Inputs are empty, show error
           showNotifToast("Missing Information", "Please fill in all info for the new semester.", STATUS_COLOR.RED, true, 4);

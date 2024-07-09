@@ -321,6 +321,7 @@ p[placeholder]:empty:before {
     display: flex;
     float: right;
     margin: auto 20px auto 10px;
+    z-index: 5;
 }
 
 .menu-sidebar {
@@ -423,7 +424,7 @@ p[placeholder]:empty:before {
 }
 
 .menu-sidebar i {
-    margin-left: 10px;
+    margin-right: 10px;
 }
 
 #menu-themes {
