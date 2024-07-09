@@ -24,6 +24,7 @@ const auth = getAuth(app);
   });
 })();
 
+const VERSION_NUMBER = "2.0.0";
 const STATUS_COLOR = { RED: "var(--color-red)", GREEN: "var(--color-green)" };
 const dateRegex = new RegExp(/^(\d{4})(\/|-)(\d{1,2})(\/|-)(\d{1,2})$/gm, 'gm');
 
@@ -116,8 +117,13 @@ window.addEventListener('load', () => {
 
   function getThemeString(localTheme, darkTheme) {
     if (localTheme !== null) return localTheme;
-    if (darkTheme.matches) return "dark";
-    return "light";
+    if (darkTheme.matches) {
+      localStorage.setItem("theme", "dark");
+      return "dark";
+    } else {
+      localStorage.setItem("theme", "light");
+      return "light";
+    }
   }
 
   menuTheme.addEventListener('click', function () {
@@ -126,6 +132,40 @@ window.addEventListener('load', () => {
     document.querySelector("html").setAttribute("data-theme", newTheme);
     newTheme === "dark" ? changeSidebarMenuItem("menu-themes", "Light Mode", "fa-sun") : changeSidebarMenuItem("menu-themes", "Dark Mode", "fa-moon");
     sideMenuToggle.checked = false;
+  });
+
+  //What's New page variables and functions
+  const newUpdatesScreen = document.getElementById("new-updates-page");
+  const menuUpdates = document.getElementById("menu-updates");
+  const newUpdatesClose = document.getElementById("new-updates-close");
+  newUpdatesScreen.querySelector('p').textContent = `Version ${VERSION_NUMBER}`;
+
+  function showUpdatesScreen() {
+    const hasShownUpdates = localStorage.getItem('hasShownUpdates');
+    const shownUpdateVersion = localStorage.getItem('version');
+
+    //Check if the version changed or hasnt shown updates, then show screen if should show
+    if (hasShownUpdates !== null && shownUpdateVersion !== null) {
+      if (hasShownUpdates === false || shownUpdateVersion !== VERSION_NUMBER) {
+        menuUpdates.click();
+      }
+    } else {
+      menuUpdates.click();
+    }
+  }
+
+  menuUpdates.addEventListener('click', function () {
+    newUpdatesScreen.classList.add('pop-up');
+    sideMenuToggle.checked = false;
+  });
+
+  newUpdatesClose.addEventListener('click', function () {
+    newUpdatesScreen.classList.remove('pop-up');
+
+    //Update local storage
+    localStorage.setItem("hasShownUpdates", true);
+    localStorage.setItem("version", VERSION_NUMBER);
+
   });
 
   //Goal language variables and functions
@@ -159,6 +199,7 @@ window.addEventListener('load', () => {
       menuLogin.click();
     } else if (user.isAnonymous === false) {
       // User is signed in
+      showUpdatesScreen();
       continueWithApp();
       changeSidebarMenuItem("menu-login", "Sign Out", "fa-right-from-bracket", "var(--color-red)");
       loginScreen.remove();
@@ -178,15 +219,15 @@ window.addEventListener('load', () => {
     loginScreen.classList.remove('pop-up');
     loginEmail.value = null;
     loginPassword.value = null;
-    loginEmail.classList.remove('login-error');
-    loginPassword.classList.remove('login-error');
+    loginEmail.classList.remove('pop-up-submit-error');
+    loginPassword.classList.remove('pop-up-submit-error');
   });
 
   loginButton.addEventListener('click', function (e) {
     e.preventDefault();
-    loginEmail.classList.remove('login-error');
-    loginPassword.classList.remove('login-error');
-    loginButton.classList.add('login-click');
+    loginEmail.classList.remove('pop-up-submit-error');
+    loginPassword.classList.remove('pop-up-submit-error');
+    loginButton.classList.add('pop-up-submit-click');
     signInUser(auth, loginEmail.value, loginPassword.value);
   });
 
@@ -204,15 +245,15 @@ window.addEventListener('load', () => {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         // Signed in 
-        loginButton.classList.remove('login-click');
+        loginButton.classList.remove('pop-up-submit-click');
         changeSidebarMenuItem("menu-login", "Sign Out", "fa-right-from-bracket", "var(--color-red)");
         loginClose.click();
       })
       .catch((error) => {
         // Unsuccessful Sign In
-        loginEmail.classList.add('login-error');
-        loginPassword.classList.add('login-error');
-        loginButton.classList.remove('login-click');
+        loginEmail.classList.add('pop-up-submit-error');
+        loginPassword.classList.add('pop-up-submit-error');
+        loginButton.classList.remove('pop-up-submit-click');
       });
   }
 
@@ -280,7 +321,7 @@ async function continueWithApp() {
           if (dbAllSemesters.child(addSemesterName.value.trim()).exists()) {
             showNotifToast("Error Adding Semester", "A semester with this name already exists. Please choose another name.", STATUS_COLOR.RED, true, 6);
           } else {
-            addSemesterSubmit.classList.add('login-click');
+            addSemesterSubmit.classList.add('pop-up-submit-click');
 
             const startDate = new Date(addSemesterStart.value);
             const endDate = new Date(addSemesterEnd.value);
@@ -293,13 +334,13 @@ async function continueWithApp() {
               Start: startString
             }).then(() => {
               addSemesterClose.click();
-              addSemesterSubmit.classList.remove('login-click');
+              addSemesterSubmit.classList.remove('pop-up-submit-click');
               addSemesterName.value = null;
               addSemesterStart.value = null;
               addSemesterEnd.value = null;
               showNotifToast("Semester Added", "New semester has been successfully added.", STATUS_COLOR.GREEN, true, 4);
             }).catch(() => {
-              addSemesterSubmit.classList.remove('login-click');
+              addSemesterSubmit.classList.remove('pop-up-submit-click');
               showNotifToast("Error Adding Semester", "There was an issue adding this semester. Please try again.", STATUS_COLOR.RED, true, 4);
             });
           }

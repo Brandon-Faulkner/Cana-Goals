@@ -25,29 +25,29 @@
 </head>
 
 <body>
-  <div id="login-page">
-    <div id="login-wrapper">
+  <div id="login-page" class="pop-up-page">
+    <div id="login-wrapper" class="pop-up-wrapper">
       <button id="login-close" class="pop-up-close">
         <i class="fa-solid fa-xmark"></i>
       </button>
-      <div id="login-title">Login to Continue</div>
-      <div class="login-field">
+      <div id="login-title" class="pop-up-title">Login to Continue</div>
+      <div class="pop-up-field">
         <input id="login-email" type="text" placeholder="Email Address" required>
       </div>
-      <div class="login-field">
+      <div class="pop-up-field">
         <input id="login-password" type="password" placeholder="Password" required>
         <span class="fa-solid fa-eye eye-icon"></span>
       </div>
-      <button id="login-button">Log In</button>
+      <button id="login-button" class="pop-up-submit">Log In</button>
     </div>
   </div>
 
-  <div id="language-page">
-    <div id="language-wrapper">
+  <div id="language-page" class="pop-up-page">
+    <div id="language-wrapper" class="pop-up-wrapper">
       <button id="language-close" class="pop-up-close">
         <i class="fa-solid fa-xmark"></i>
       </button>
-      <div id="language-content">
+      <div id="language-content" class="pop-up-content">
         <span>
           <h3><em>Goals Should Be</em></h3>
           <p><strong>Specific</strong>&nbsp;&ndash; be clear what you are working on</p>
@@ -80,26 +80,86 @@
     </div>
   </div>
 
-  <div id="add-semester-page">
-    <div id="add-semester-wrapper">
+  <div id="new-updates-page" class="pop-up-page">
+    <div id="new-updates-wrapper" class="pop-up-wrapper">
+      <button id="new-updates-close" class="pop-up-close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div id="new-updates-content" class="pop-up-content">
+        <div id="add-semester-title" class="pop-up-title">Newest Updates</div>
+        <p style="text-align: center;">Version 2.0.0</p>
+        <ul>
+          <li><strong>New Side Menu</strong>
+            <ul>
+              <li>In the top right corner, there's a new button that opens a menu with features like login/sign out,
+                goal language page, and more.</li>
+            </ul>
+          </li>
+          <li><strong>Redesigned Semester Layout</strong>
+            <ul>
+              <li>The new layout features tabs at the top for easy semester selection, eliminating the need to scroll
+                back up to choose a semester.</li>
+            </ul>
+          </li>
+          <li><strong>No More Table Buttons!</strong>
+            <ul>
+              <li>Buttons were removed from the tables (except comments and table folds) for a more unified look. Table
+                actions are now available through a contextual menu, having Add New Goal, Expand Table Folds, and Close
+                Table Folds always showing. with other actions based on selection.</li>
+              <li><strong>Desktop - </strong>On desktop, right-click or double-click on different table parts to access
+                actions. To add a goal, right or double-click on a previous goal or table headers, then select Add New
+                Goal. This also works for building blocks and comments.</li>
+              <li><strong>Mobile - </strong>On mobile devices, you can double-tap or hold down on the screen over the
+                table part to see actions, similar to desktop.</li>
+            </ul>
+          </li>
+          <li><strong>Table Comments</strong>
+            <ul>
+              <li>Table comments now feature a submit button on the right side when typing. Clicking it posts your
+                comment and sends an email notification to the table owner if the table is not yours, keeping users
+                informed of new comments.</li>
+            </ul>
+          </li>
+          <li><strong>Goal/Building Block Status</strong>
+            <ul>
+              <li>Percentage based completion was replaced with statuses. When you click a status cell, you will see a
+                menu where you can select the status that applies to the goal/building block.</li>
+            </ul>
+          </li>
+          <li><strong>Finally, AutoSave!</strong>
+            <ul>
+              <li>Yes I know, the old way of having to press save for everything was annoying, but worry no more!
+                Everything will now autosave a second or two after you make any changes.</li>
+              <li>When an autosave occurs, you'll be notified in two ways. On the left of the menu button, a status
+                indicator appears: text with an icon on desktop and an icon on mobile. Additionally, you'll receive an
+                in-app notification confirming the save. For errors, reload the page to view the latest saved data.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="add-semester-page" class="pop-up-page">
+    <div id="add-semester-wrapper" class="pop-up-wrapper">
       <button id="add-semester-close" class="pop-up-close">
         <i class="fa-solid fa-xmark"></i>
       </button>
-      <div id="add-semester-content">
-        <div id="add-semester-title">Add Semester</div>
+      <div id="add-semester-content" class="pop-up-content">
+        <div id="add-semester-title" class="pop-up-title">Add Semester</div>
         <label>Semester Name</label>
-        <div class="login-field">
+        <div class="pop-up-field">
           <input id="add-semester-name" type="text" placeholder="Ex: Spring 20XX">
         </div>
         <label>Semester Start Date</label>
-        <div class="login-field">
+        <div class="pop-up-field">
           <input id="add-semester-start" type="date">
         </div>
         <label>Semester End Date</label>
-        <div class="login-field">
+        <div class="pop-up-field">
           <input id="add-semester-end" type="date">
         </div>
-        <button id="add-semester-submit">Submit Semester</button>
+        <button id="add-semester-submit" class="pop-up-submit">Submit Semester</button>
       </div>
     </div>
   </div>
@@ -143,6 +203,7 @@
           <div class="menu-sidebar">
             <span id="menu-login"><i class="fas fa-right-to-bracket"></i>Log In</span>
             <span id="menu-themes"><i class="fas fa-sun"></i>Light Mode</span>
+            <span id="menu-updates"><i class="fas fa-pen-to-square"></i>What's New</span>
             <span id="menu-goals"><i class="fas fa-earth-americas"></i>Goal Language</span>
           </div>
         </div>
