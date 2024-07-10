@@ -27,9 +27,6 @@
 <body>
   <div id="login-page" class="pop-up-page">
     <div id="login-wrapper" class="pop-up-wrapper">
-      <button id="login-close" class="pop-up-close">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
       <div id="login-title" class="pop-up-title">Login to Continue</div>
       <div class="pop-up-field">
         <input id="login-email" type="text" placeholder="Email Address" required>
@@ -91,8 +88,8 @@
         <ul>
           <li><strong>New Side Menu</strong>
             <ul>
-              <li>In the top right corner, there's a new button that opens a menu with features like login/sign out,
-                goal language page, and more.</li>
+              <li>In the top right corner, there's a new button that opens a menu with features like settings,
+                goal language page, and more!</li>
             </ul>
           </li>
           <li><strong>Redesigned Semester Layout</strong>
@@ -105,10 +102,10 @@
             <ul>
               <li>Buttons were removed from the tables (except comments and table folds) for a more unified look. Table
                 actions are now available through a contextual menu, having Add New Goal, Expand Table Folds, and Close
-                Table Folds always showing. with other actions based on selection.</li>
+                Table Folds always showing, with other actions based on selection.</li>
               <li><strong>Desktop - </strong>On desktop, right-click or double-click on different table parts to access
                 actions. To add a goal, right or double-click on a previous goal or table headers, then select Add New
-                Goal. This also works for building blocks and comments.</li>
+                Goal. This also works for building blocks, comments and deleting.</li>
               <li><strong>Mobile - </strong>On mobile devices, you can double-tap or hold down on the screen over the
                 table part to see actions, similar to desktop.</li>
             </ul>
@@ -117,7 +114,7 @@
             <ul>
               <li>Table comments now feature a submit button on the right side when typing. Clicking it posts your
                 comment and sends an email notification to the table owner if the table is not yours, keeping users
-                informed of new comments.</li>
+                informed of new comments. To remove a comment, open the contextual menu and click Delete Comment.</li>
             </ul>
           </li>
           <li><strong>Goal/Building Block Status</strong>
@@ -129,7 +126,7 @@
           <li><strong>Finally, AutoSave!</strong>
             <ul>
               <li>Yes I know, the old way of having to press save for everything was annoying, but worry no more!
-                Everything will now autosave a second or two after you make any changes.</li>
+                Table data will now autosave a second or two after you make any changes.</li>
               <li>When an autosave occurs, you'll be notified in two ways. On the left of the menu button, a status
                 indicator appears: text with an icon on desktop and an icon on mobile. Additionally, you'll receive an
                 in-app notification confirming the save. For errors, reload the page to view the latest saved data.</li>
@@ -160,6 +157,26 @@
           <input id="add-semester-end" type="date">
         </div>
         <button id="add-semester-submit" class="pop-up-submit">Submit Semester</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings-page" class="pop-up-page">
+    <div id="settings-wrapper" class="pop-up-wrapper">
+      <button id="settings-close" class="pop-up-close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div id="settings-content" class="pop-up-content">
+        <div id="settings-title" class="pop-up-title">Settings</div>
+        <div class="pop-up-field">
+          <p>Receive Comment Emails</p>
+          <input id="settings-emails" type="checkbox" class="settings-toggle" checked>
+        </div>
+        <div class="pop-up-field">
+          <p>Show Confetti Animations</p>
+          <input id="settings-confetti" type="checkbox" class="settings-toggle" checked>
+        </div>
+        <button id="settings-submit" class="pop-up-submit">Save Settings</button>
       </div>
     </div>
   </div>
@@ -203,6 +220,7 @@
           <div class="menu-sidebar">
             <span id="menu-login"><i class="fas fa-right-to-bracket"></i>Log In</span>
             <span id="menu-themes"><i class="fas fa-sun"></i>Light Mode</span>
+            <span id="menu-settings"><i class="fas fa-gear"></i>Settings</span>
             <span id="menu-updates"><i class="fas fa-pen-to-square"></i>What's New</span>
             <span id="menu-goals"><i class="fas fa-earth-americas"></i>Goal Language</span>
           </div>
@@ -212,6 +230,8 @@
     </header>
     <ul id="semesters-container"></ul>
   </div>
+  <!-- https://github.com/catdad/canvas-confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script type="module" src="script.js"></script>
 </body>
@@ -259,8 +279,8 @@
 <template id="template-goal">
   <tr class="view" data-context="user-goal">
     <td><button class="fold-btn fas fa-caret-down"></button></td>
-    <td contenteditable="plaintext-only" placeholder="Goal..."></td>
-    <td><input type="date" class="table-action"></td>
+    <td contenteditable="plaintext-only" placeholder="Goal..." class="autosave"></td>
+    <td><input type="date" class="table-action autosave"></td>
     <td class="status-input"><i class="fas fa-circle-xmark"></i>Not Working On</td>
   </tr>
   <tr class="fold-closed">
@@ -293,8 +313,8 @@
 
 <template id="template-build-block">
   <tr data-context="user-build-block">
-    <td contenteditable="plaintext-only" placeholder="Building Block..."></td>
-    <td><input type="date" class="table-action"></td>
+    <td contenteditable="plaintext-only" placeholder="Building Block..." class="autosave"></td>
+    <td><input type="date" class="table-action autosave"></td>
     <td class="status-input"><i class="fas fa-circle-xmark"></i>Not Working On</td>
   </tr>
 </template>

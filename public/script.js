@@ -34,6 +34,29 @@ function changeSidebarMenuItem(id, text, iClass, color) {
   if (color) elem.style.background = color;
 }
 
+function showCompletedConfetti() {
+  var duration = 5 * 1000;
+  var animationEnd = Date.now() + duration;
+  var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0, colors: ["#00aa63", "#fff", "#4fc3a1", "#1679AB"] };
+
+  function randomInRange(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  var interval = setInterval(function () {
+    var timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) {
+      return clearInterval(interval);
+    }
+
+    var particleCount = 50 * (timeLeft / duration);
+    // since particles fall down, start a bit higher than random
+    confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+    confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+  }, 250);
+}
+
 function showNotifToast(title, message, statusColor, isTimed, seconds) {
   const toastHolder = document.getElementById('toast-holder');
   const toastTemplate = document.getElementById('template-toast');
@@ -134,6 +157,39 @@ window.addEventListener('load', () => {
     sideMenuToggle.checked = false;
   });
 
+  //Settings page variables and functions
+  const settingsScreen = document.getElementById("settings-page");
+  const menuSettings = document.getElementById("menu-settings");
+  const settingsClose = document.getElementById("settings-close");
+  const settingsSubmit = document.getElementById("settings-submit");
+
+  menuSettings.addEventListener('click', function () {
+    settingsScreen.classList.add('pop-up');
+    sideMenuToggle.checked = false;
+  });
+
+  settingsClose.addEventListener('click', function () {
+    settingsScreen.classList.remove('pop-up');
+  });
+
+  settingsSubmit.addEventListener('click', function () {
+    if (auth.currentUser !== null) {
+      //Update db with user's new settings
+      settingsSubmit.classList.add('pop-up-submit-click');
+      set(ref(database, `Users/${auth.currentUser.uid}/Settings`), {
+        Emails: document.getElementById("settings-emails").checked,
+        Confetti: document.getElementById("settings-confetti").checked
+      }).then(() => {
+        settingsSubmit.classList.remove('pop-up-submit-click');
+        settingsClose.click();
+        showNotifToast("Settings Saved", "Any changes you made to settings has been saved.", STATUS_COLOR.GREEN, true, 4);
+      }).catch(() => {
+        settingsSubmit.classList.remove('pop-up-submit-click');
+        showNotifToast("Error Saving Settings", "There was an issue saving your settings. Please try again.", STATUS_COLOR.RED, true, 4);
+      });
+    }
+  });
+
   //What's New page variables and functions
   const newUpdatesScreen = document.getElementById("new-updates-page");
   const menuUpdates = document.getElementById("menu-updates");
@@ -185,7 +241,6 @@ window.addEventListener('load', () => {
   //#region LOGIN FUNCTIONS
   const menuLogin = document.getElementById('menu-login');
   const loginScreen = document.getElementById('login-page');
-  const loginClose = document.getElementById('login-close');
   const loginEmail = document.getElementById('login-email');
   const loginPassword = document.getElementById('login-password');
   const loginButton = document.getElementById('login-button');
@@ -215,14 +270,6 @@ window.addEventListener('load', () => {
     }
   });
 
-  loginClose.addEventListener('click', function () {
-    loginScreen.classList.remove('pop-up');
-    loginEmail.value = null;
-    loginPassword.value = null;
-    loginEmail.classList.remove('pop-up-submit-error');
-    loginPassword.classList.remove('pop-up-submit-error');
-  });
-
   loginButton.addEventListener('click', function (e) {
     e.preventDefault();
     loginEmail.classList.remove('pop-up-submit-error');
@@ -247,7 +294,6 @@ window.addEventListener('load', () => {
         // Signed in 
         loginButton.classList.remove('pop-up-submit-click');
         changeSidebarMenuItem("menu-login", "Sign Out", "fa-right-from-bracket", "var(--color-red)");
-        loginClose.click();
       })
       .catch((error) => {
         // Unsuccessful Sign In
@@ -259,7 +305,6 @@ window.addEventListener('load', () => {
 
   function signOutUser(auth) {
     signOut(auth).then(() => {
-      loginClose.click();
       window.location.reload();
     }).catch((error) => {
       console.log(error.code + ": " + error.message);
@@ -274,14 +319,24 @@ async function continueWithApp() {
   const semestersContainer = document.getElementById('semesters-container');
   const contextMenu = document.getElementById('context-menu');
   const statusMenu = document.getElementById('status-menu');
-  var currUserName, isUserAdmin, allUserEmails;
+  var currUserName, isUserAdmin, allUsersInfo;
 
   //#region TABLE CREATION FUNCTIONS
   await get(ref(database, `Users/`)).then((snapshot) => {
-    allUserEmails = snapshot;
+    allUsersInfo = snapshot;
     currUserName = snapshot.child(auth.currentUser.uid).child("Name").val();
     isUserAdmin = snapshot.child(auth.currentUser.uid).child("isAdmin").val();
     createAddSemesterMenuItem(isUserAdmin);
+
+    //Update settings page with the current settings saved by user
+    if (snapshot.child(auth.currentUser.uid).child("Settings").exists()) {
+      const settings = snapshot.child(auth.currentUser.uid).child("Settings");
+      const settingsEmails = document.getElementById("settings-emails");
+      const settingsConfetti = document.getElementById("settings-confetti");
+
+      settingsEmails.checked = settings.child("Emails").val();
+      settingsConfetti.checked = settings.child("Confetti").val();
+    }
   }).catch(() => {
     const message = "There was an error retrieving your info from the database. Refresh the page to try again."
     showNotifToast("Error Retrieving Info", message, STATUS_COLOR.RED, false);
@@ -746,6 +801,8 @@ async function continueWithApp() {
           break;
         case 'status-completed':
           lastStatusInput.style = "background: var(--color-green); color: var(--color-white);";
+          //Only show confetti if user settings allows it
+          if (document.getElementById("settings-confetti").checked) showCompletedConfetti();
           break;
         case 'status-waiting':
           lastStatusInput.style = "background: var(--color-status-orange); color: var(--color-white);";
@@ -970,9 +1027,7 @@ async function continueWithApp() {
   }
 
   document.addEventListener('input', (e) => {
-    if (e.target.type !== "radio" && e.target.type !== "checkbox"
-      && !e.target.classList.contains('goal-focus-p') && !e.target.parentElement.classList.contains('login-field')
-      && !e.target.getAttribute('placeholder') === "Add a comment...") {
+    if (e.target.classList.contains('autosave')) {
       lastInputEdited = e.target;
 
       //Get the current timestamp and semester
@@ -1029,38 +1084,44 @@ async function continueWithApp() {
       clearTimeout(inputTimeout);
       inputTimeout = setTimeout(autoSaveData, AUTO_SAVE_DELAY);
 
-      //Send an email if user just submitted a comment and it isn't their own table
+      //Send email when submitting comment if user allows and it isn't their table
       if (e.target.className === 'comment-submit') {
-        const userID = currUserTableEdited.split("-table")[0];
-        if (userID !== auth.currentUser.uid) {
-          const userEmail = allUserEmails.child(userID).child("Email").val();
-          const userName = allUserEmails.child(userID).child("Name").val();
-          const commentMessage = lastInputEdited.previousElementSibling.textContent;
+        //If the comment is empty, we just want to save to db, not send email
+        if (lastInputEdited.previousElementSibling.textContent.trim() === "") {
+          lastInputEdited.previousElementSibling.removeAttribute('data-author');
+          lastInputEdited.previousElementSibling.textContent = "";
+        } else {
+          const userID = currUserTableEdited.split("-table")[0];
+          if (userID !== auth.currentUser.uid && allUsersInfo.child(userID).child("Settings").child("Emails").val() === true) {
+            const userEmail = allUsersInfo.child(userID).child("Email").val();
+            const userName = allUsersInfo.child(userID).child("Name").val();
+            const commentMessage = lastInputEdited.previousElementSibling.textContent;
 
-          //Get the goal associated with this comment
-          const foldRow = lastInputEdited.closest('[class*="fold"]');
-          const goalRow = foldRow.previousElementSibling;
-          const goalContent = goalRow.querySelector('[placeholder="Goal..."]').textContent;
+            //Get the goal associated with this comment
+            const foldRow = lastInputEdited.closest('[class*="fold"]');
+            const goalRow = foldRow.previousElementSibling;
+            const goalContent = goalRow.querySelector('[placeholder="Goal..."]').textContent;
 
-          //Construct the email parameters
-          const emailParams = {
-            to_email: userEmail,
-            to_name: userName,
-            comment_name: currUserName,
-            message: commentMessage,
-            goal_content: goalContent,
-            semester: currSemesterEdited
-          };
+            //Construct the email parameters
+            const emailParams = {
+              to_email: userEmail,
+              to_name: userName,
+              comment_name: currUserName,
+              message: commentMessage,
+              goal_content: goalContent,
+              semester: currSemesterEdited
+            };
 
-          //Send the email
-          emailjs.send('service_goals', 'template_goals', emailParams).then(
-            (response) => {
-              showNotifToast("Comment Submitted", `${userName} has been notified of your comment.`, STATUS_COLOR.GREEN, true, 6);
-            },
-            (error) => {
-              console.log(`Email Error: ${error}`);
-            }
-          );
+            //Send the email
+            emailjs.send('service_goals', 'template_goals', emailParams).then(
+              (response) => {
+                showNotifToast("Comment Submitted", `${userName} has been notified of your comment.`, STATUS_COLOR.GREEN, true, 6);
+              },
+              (error) => {
+                console.log(`Email Error: ${error}`);
+              }
+            );
+          }
         }
         //Remove the submit button
         e.target.remove();
@@ -1085,24 +1146,6 @@ async function continueWithApp() {
       } else {
         //Don't let people edit comments that aren't theirs
         e.preventDefault();
-      }
-    }
-  });
-
-  document.addEventListener('keyup', (e) => {
-    //Update comments with author
-    if (e.target.getAttribute('placeholder') === "Add a comment...") {
-      //Remove author if input is empty
-      if (e.target.textContent.trim() === "") {
-        e.target.removeAttribute('data-author');
-        //Remove submit button
-        const commentSubmit = e.target.parentElement.querySelector('.comment-submit');
-        if (commentSubmit) commentSubmit.remove();
-        //Save the removal of the comment to db
-        lastInputEdited = e.target;
-        currSemesterEdited = lastInputEdited.closest('[data-semester]').getAttribute('data-semester');
-        currUserTableEdited = lastInputEdited.closest('[data-context="user-table"]').getAttribute('id');
-        autoSaveData();
       }
     }
   });
