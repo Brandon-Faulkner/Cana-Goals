@@ -322,21 +322,25 @@ async function continueWithApp() {
   var currUserName, isUserAdmin, allUsersInfo;
 
   //#region TABLE CREATION FUNCTIONS
-  await get(ref(database, `Users/`)).then((snapshot) => {
-    allUsersInfo = snapshot;
-    currUserName = snapshot.child(auth.currentUser.uid).child("Name").val();
-    isUserAdmin = snapshot.child(auth.currentUser.uid).child("isAdmin").val();
+  await get(ref(database, `Users/${auth.currentUser.uid}`)).then((snapshot) => {
+    currUserName = snapshot.child("Name").val();
+    isUserAdmin = snapshot.child("isAdmin").val();
     createAddSemesterMenuItem(isUserAdmin);
 
     //Update settings page with the current settings saved by user
-    if (snapshot.child(auth.currentUser.uid).child("Settings").exists()) {
-      const settings = snapshot.child(auth.currentUser.uid).child("Settings");
+    if (snapshot.child("Settings").exists()) {
+      const settings = snapshot.child("Settings");
       const settingsEmails = document.getElementById("settings-emails");
       const settingsConfetti = document.getElementById("settings-confetti");
 
       settingsEmails.checked = settings.child("Emails").val();
       settingsConfetti.checked = settings.child("Confetti").val();
     }
+
+    //Used to know if user whos table was commented on would like to receive emails
+    onValue(ref(database, 'Users/'), (snapshot) => {
+      allUsersInfo = snapshot;
+    });
   }).catch(() => {
     const message = "There was an error retrieving your info from the database. Refresh the page to try again."
     showNotifToast("Error Retrieving Info", message, STATUS_COLOR.RED, false);
@@ -719,7 +723,7 @@ async function continueWithApp() {
 
       //Only show if context menu is allowed. ie: table is not being edited
       if (lastContextTable.getAttribute("style") !== "pointer-events: none;") {
-        showActionMenu(contextMenu, e.clientX, e.clientY);
+        showActionMenu(contextMenu, e.pageX, e.pageY);
         e.preventDefault();
       }
     }
@@ -729,6 +733,23 @@ async function continueWithApp() {
     statusMenu.className = '';
     handleContextMenu(e);
   });
+
+  (function handleSafariContextMenu() {
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes('Macintosh') && 'ontouchend' in document)) {
+      let touchHoldTimer;
+      const holdDuration = 500;
+      semestersContainer.addEventListener('touchstart', (e) => {
+        touchHoldTimer = setTimeout(function () {
+          //Used to allow context menu to show on safari mobile
+          handleContextMenu(e);
+        }, holdDuration);
+      });
+      semestersContainer.addEventListener('touchend', (e) => {
+        // Clear the timer if the touch ends before the hold duration
+        clearTimeout(touchHoldTimer);
+      });
+    }
+  })()
 
   var lastClick = 0;
   document.addEventListener('mousedown', (e) => {
