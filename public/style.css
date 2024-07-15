@@ -90,6 +90,8 @@ header>div:first-child {
 header>div:first-child>img {
     max-width: 40px;
     margin: 0 5px 5px;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 h1 {
@@ -218,6 +220,8 @@ p[placeholder]:empty:before {
     box-shadow: var(--box-shadow);
     transition: opacity 150ms;
     pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .show-menu {
@@ -955,6 +959,8 @@ li>div {
     background: var(--color-bg);
     width: 95%;
     border-radius: 10px;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 li>div>span {

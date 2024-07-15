@@ -315,6 +315,7 @@ window.addEventListener('load', () => {
 });
 
 async function continueWithApp() {
+  const mainPage = document.getElementById('main-page')
   const semestersMenu = document.getElementById('semesters-menu');
   const semestersContainer = document.getElementById('semesters-container');
   const contextMenu = document.getElementById('context-menu');
@@ -734,39 +735,27 @@ async function continueWithApp() {
     handleContextMenu(e);
   });
 
+  //Used to allow context menu to show on safari mobile
+  let isShowingSafariContext = false;
   (function handleSafariContextMenu() {
     if (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes('Macintosh') && 'ontouchend' in document)) {
-      let touchHoldTimer;
-      const holdDuration = 500;
       semestersContainer.addEventListener('touchstart', (e) => {
         touchHoldTimer = setTimeout(function () {
-          //Used to allow context menu to show on safari mobile
           handleContextMenu(e);
-        }, holdDuration);
-      });
-      semestersContainer.addEventListener('touchend', (e) => {
-        // Clear the timer if the touch ends before the hold duration
-        clearTimeout(touchHoldTimer);
+          isShowingSafariContext = true;
+        }, 500);
       });
     }
   })()
 
-  var lastClick = 0;
+  document.addEventListener('dblclick', (e) => {
+    handleContextMenu(e);
+    document.activeElement.blur();
+  });
+
+  let touchHoldTimer;
   document.addEventListener('mousedown', (e) => {
     statusMenu.className = '';
-
-    //Check if user is double tapping to 
-    //show context menu on mobile devices
-    let date = new Date();
-    let time = date.getTime();
-    const timeBetweenTaps = 200; //200ms
-    if (time - lastClick < timeBetweenTaps) {
-      handleContextMenu(e);
-      document.activeElement.blur();
-      lastClick = time;
-      return;
-    }
-    lastClick = time;
 
     //Context menu actions
     switch (e.target) {
@@ -833,11 +822,18 @@ async function continueWithApp() {
           break;
       }
     }
-
-    contextMenu.className = '';
   });
 
-  document.addEventListener('wheel', () => {
+  document.addEventListener('mouseup', (e) => {
+    clearTimeout(touchHoldTimer);
+    if (contextMenu.classList.contains('show-menu') && !isShowingSafariContext) {
+      contextMenu.className = '';
+    } else {
+      isShowingSafariContext = false;
+    }
+  });
+
+  mainPage.addEventListener('scroll', () => {
     contextMenu.className = '';
   });
 
@@ -948,7 +944,7 @@ async function continueWithApp() {
 
   //#region AUTO SAVE FUNCTIONS
   const AUTO_SAVE_DELAY = 1000; // 1 second
-  const ALLOW_EDITS_DELAY = 30000; //30 seconds
+  const ALLOW_EDITS_DELAY = 15000; //15 seconds
 
   var inputTimeout, lastInputEdited;
   var dbUserTime, currUserTime;
@@ -980,7 +976,6 @@ async function continueWithApp() {
     });
   });
 
-  var allowTableEditTimeout;
   function changeTableEditability(table, time) {
     //Get all needed elements
     const editSpan = table.querySelector('span');
@@ -988,7 +983,10 @@ async function continueWithApp() {
     const inputElems = Array.from(table.querySelectorAll('input'));
 
     function changeElemsEditability(isEditable) {
+      var allowTableEditTimeout;
+
       if (isEditable) {
+        //Table is allowed to be edited
         table.removeAttribute("style");
         editSpan.removeAttribute("style");
 
@@ -998,7 +996,10 @@ async function continueWithApp() {
         inputElems.forEach((elem) => {
           elem.removeAttribute("disabled");
         });
+
+        clearTimeout(allowTableEditTimeout);
       } else {
+        //Table is not allowed to be edited
         table.style = "pointer-events: none";
         editSpan.style = "opacity: 1";
 
@@ -1008,6 +1009,15 @@ async function continueWithApp() {
         inputElems.forEach((elem) => {
           elem.setAttribute("disabled", true);
         });
+
+        clearTimeout(allowTableEditTimeout);
+        allowTableEditTimeout = setTimeout(() => {
+          //Update the table with any new data
+          const semesterLi = table.closest('[data-semester]');
+          updateUserTable(semesterLi, dbAllSemesters, table);
+          table.removeAttribute("style");
+          editSpan.removeAttribute("style");
+        }, Math.abs(time - ALLOW_EDITS_DELAY));
       }
     }
 
@@ -1015,15 +1025,6 @@ async function continueWithApp() {
     if (time < ALLOW_EDITS_DELAY) {
       //Change elements to not be editable
       changeElemsEditability(false);
-
-      clearTimeout(allowTableEditTimeout);
-      allowTableEditTimeout = setTimeout(() => {
-        //Update the table with any new data
-        const semesterLi = table.closest('[data-semester]');
-        updateUserTable(semesterLi, dbAllSemesters, table);
-        table.removeAttribute("style");
-        editSpan.removeAttribute("style");
-      }, Math.abs(time - ALLOW_EDITS_DELAY));
     } else {
       //Editing is allowed for this table
       changeElemsEditability(true);
