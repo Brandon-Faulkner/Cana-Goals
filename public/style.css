@@ -19,6 +19,7 @@
     --color-status-orange: #FF7F3E;
     --color-placeholder: rgba(0, 0, 0, 0.5);
     --color-placeholder-light: rgba(255, 255, 255, 0.5);
+    --text-shadow: 3px 4px 7px rgba(0, 0, 0, 0.5);
     --border-radius: 5px;
     --box-shadow: 0 3px 6px #00000029, 0 3px 6px #0000003b;
     --box-shadow-table: rgba(0, 0, 0, 0.35) 0px 5px 15px;
@@ -249,7 +250,7 @@ p[placeholder]:empty:before {
     text-wrap: nowrap;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
-    text-shadow: 3px 4px 7px rgba(0, 0, 0, 0.5);
+    text-shadow: var(--text-shadow);
     transition: 250ms;
 }
 
@@ -379,7 +380,7 @@ p[placeholder]:empty:before {
     background: var(--color-bg);
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
-    text-shadow: 3px 4px 7px rgba(0, 0, 0, 0.5);
+    text-shadow: var(--text-shadow);
     transition: 250ms;
 }
 
@@ -609,7 +610,7 @@ p[placeholder]:empty:before {
     min-width: 52px;
     display: inline-block;
     position: relative;
-    margin: auto;
+    margin: auto auto auto 0px;
     border: 2px solid var(--color-light-gray);
     background: var(--color-light-gray);
     border-radius: 16px;
@@ -640,6 +641,8 @@ p[placeholder]:empty:before {
 
 .pop-up-field p {
     font-weight: 500;
+    margin: auto 20px auto auto;
+    width: 200px;
 }
 
 .pop-up-field input::placeholder {
@@ -1001,6 +1004,7 @@ table th {
     padding: 8px;
     min-width: 220px;
     box-shadow: var(--box-shadow);
+    text-shadow: var(--text-shadow);
     user-select: none;
     -webkit-user-select: none;
 }
@@ -1156,8 +1160,9 @@ td[placeholder="Add a comment..."] {
 }
 
 .comment-submit{
-    width: 72px;
+    width: 80px;
     display: flex;
+    justify-content: center;
     margin-left: 5px;
     padding: 6px;
     font-size: 20px;
@@ -1167,7 +1172,7 @@ td[placeholder="Add a comment..."] {
     color: var(--color-white);
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
-    text-shadow: 3px 4px 7px rgba(0, 0, 0, 0.5);
+    text-shadow: var(--text-shadow);
     transition: 250ms;
 }
 
@@ -1192,6 +1197,55 @@ td[placeholder="Add a comment..."] {
 }
 
 /*#endregion Table Actions*/
+
+/*#region Table Extra Buttons*/
+.extra-buttons-holder {
+    display: flex;
+    justify-content: end;
+    margin-right: 5px;
+}
+
+.fold-open .extra-buttons-holder {
+    margin: 0px 0px -25px 0px;
+}
+
+.extra-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 5px;
+    padding: 8px;
+    font-size: 18px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--color-white);
+    background: var(--color-green);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    text-shadow: var(--text-shadow);
+    transition: 250ms;
+}
+
+.extra-button:hover {
+    transform: scale(1.05);
+}
+
+.extra-button:active {
+    transform: scale(.95);
+}
+
+.extra-add-goal {
+    background: var(--color-green);
+}
+
+.extra-add-build-block {
+    background: var(--color-green-alt);
+}
+
+.extra-add-comment {
+    background: var(--scrollbar);
+}
+/*#endregion Table Extra Buttons*/
 
 /*#endregion TABLE CONTAINER & TABLES*/
 

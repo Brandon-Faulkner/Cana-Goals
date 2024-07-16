@@ -120,6 +120,48 @@ function showNotifToast(title, message, statusColor, isTimed, seconds) {
   });
 }
 
+function showExtraTableButtons(shouldShow) {
+  //Gather all button holders then remove first
+  const allExtraButtons = document.querySelectorAll('.extra-buttons-holder');
+  Array.from(allExtraButtons).forEach((holder) => {
+    holder.remove();
+  });
+
+  if (shouldShow) {
+    //Gather all tables then add buttons
+    const allTables = document.querySelectorAll('[data-context="user-table"]');
+    const buttonHolder = document.createElement('div');
+    buttonHolder.className = 'extra-buttons-holder';
+    const button = document.createElement('span');
+    button.className = 'extra-button';
+    buttonHolder.appendChild(button);
+
+    Array.from(allTables).forEach((table) => {
+      //Add Goal button
+      const goalButtons = buttonHolder.cloneNode(true);
+      goalButtons.children[0].classList.add("extra-add-goal");
+      goalButtons.children[0].innerHTML = '<i class="fas fa-list-check"></i>Add New Goal';
+      table.appendChild(goalButtons);
+
+      //Add Building Block/Add Comment buttons
+      const foldTables = table.querySelectorAll('tr[class*="fold-"]');
+      Array.from(foldTables).forEach((foldTable) => {
+        const buildBlockButtons = buttonHolder.cloneNode(true);
+        buildBlockButtons.children[0].classList.add("extra-add-build-block");
+        buildBlockButtons.children[0].innerHTML = '<i class="fas fa-cube"></i>Add Building Block';
+        const bbTable = foldTable.querySelector('.building-block-table');
+        bbTable.insertAdjacentElement('afterend', buildBlockButtons);
+
+        const commentButtons = buttonHolder.cloneNode(true);
+        commentButtons.children[0].classList.add("extra-add-comment");
+        commentButtons.children[0].innerHTML = '<i class="fas fa-comment"></i>Add New Comment';
+        const commentTable = foldTable.querySelector('.comment-table');
+        commentTable.insertAdjacentElement('afterend', commentButtons);
+      });
+    });
+  }
+}
+
 window.addEventListener('load', () => {
   //Ensure that the browser supports the service worker API then register it
   if (navigator.serviceWorker) {
@@ -178,8 +220,10 @@ window.addEventListener('load', () => {
       settingsSubmit.classList.add('pop-up-submit-click');
       set(ref(database, `Users/${auth.currentUser.uid}/Settings`), {
         Emails: document.getElementById("settings-emails").checked,
-        Confetti: document.getElementById("settings-confetti").checked
+        Confetti: document.getElementById("settings-confetti").checked,
+        Buttons: document.getElementById("settings-buttons").checked
       }).then(() => {
+        showExtraTableButtons(document.getElementById("settings-buttons").checked);
         settingsSubmit.classList.remove('pop-up-submit-click');
         settingsClose.click();
         showNotifToast("Settings Saved", "Any changes you made to settings has been saved.", STATUS_COLOR.GREEN, true, 4);
@@ -333,9 +377,11 @@ async function continueWithApp() {
       const settings = snapshot.child("Settings");
       const settingsEmails = document.getElementById("settings-emails");
       const settingsConfetti = document.getElementById("settings-confetti");
+      const settingsButtons = document.getElementById("settings-buttons");
 
       settingsEmails.checked = settings.child("Emails").val();
       settingsConfetti.checked = settings.child("Confetti").val();
+      settingsButtons.checked = settings.child("Buttons").val();
     }
 
     //Used to know if user whos table was commented on would like to receive emails
@@ -463,6 +509,9 @@ async function continueWithApp() {
           semesterLi.querySelector(".goal-focus-p").textContent = semester.child("Focus").val();
         }
       });
+
+      //Show table buttons if user has it on in settings
+      showExtraTableButtons(document.getElementById('settings-buttons').checked);
     }
   });
 
@@ -779,6 +828,20 @@ async function continueWithApp() {
         break;
     }
 
+    //Extra table buttons
+    if (e.target.classList.contains('extra-button')) {
+      if (e.target.classList.contains('extra-add-goal')) {
+        lastContextTable = e.target.closest('div[id*="-table"]');
+        addGoalFunc(lastContextTable);
+      } else if (e.target.classList.contains('extra-add-build-block')) {
+        lastContextGoal = e.target.closest('.fold-open').previousElementSibling;
+        addBuildBlockFunc(lastContextGoal);
+      } else if (e.target.classList.contains('extra-add-comment')) {
+        lastContextGoal = e.target.closest('.fold-open').previousElementSibling;
+        addCommentFunc(lastContextGoal);
+      }
+    }
+
     //Carret fold buttons
     if (e.target.classList.contains('fold-btn')) {
       var parentTableRowElem = e.target.parentElement.parentElement;
@@ -881,6 +944,12 @@ async function continueWithApp() {
     const dateTD = clonedGoal.querySelector('[type="date"]').parentElement;
     setCellData(dateTD, 1, null, semester);
     userTableBody.appendChild(clonedGoal);
+
+    const goalInserted = userTableBody.lastElementChild.previousElementSibling;
+    addBuildBlockFunc(goalInserted);
+    addCommentFunc(goalInserted);
+
+    showExtraTableButtons(document.getElementById('settings-buttons').checked);
   }
 
   function addBuildBlockFunc(userGoal) {
