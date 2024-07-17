@@ -359,7 +359,8 @@ window.addEventListener('load', () => {
 });
 
 async function continueWithApp() {
-  const mainPage = document.getElementById('main-page')
+  const mainPage = document.getElementById('main-page');
+  const skeletonContainer = document.getElementById("skeleton-container");
   const semestersMenu = document.getElementById('semesters-menu');
   const semestersContainer = document.getElementById('semesters-container');
   const contextMenu = document.getElementById('context-menu');
@@ -512,6 +513,12 @@ async function continueWithApp() {
 
       //Show table buttons if user has it on in settings
       showExtraTableButtons(document.getElementById('settings-buttons').checked);
+
+      //Content is ready to show. Hide skeleton loader and show content
+      setTimeout(() => {
+        skeletonContainer.style.display = "none";
+        semestersContainer.removeAttribute("style");
+      }, 500);
     }
   });
 
