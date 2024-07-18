@@ -475,12 +475,20 @@ async function continueWithApp() {
 
           //Create menu item tab for the semester
           createSemesterMenuItem(semester.key + ": " + semester.child("Start").val() + " - " + semester.child("End").val());
+          sortSemesterMenuItems();
 
           //Create the goal focus for the semester
           const goalFocusTemplate = document.getElementById("template-goal-focus");
           const goalFocusClone = goalFocusTemplate.content.cloneNode(true);
           goalFocusClone.querySelector('.goal-focus-p').textContent = semester.child("Focus").val();
           semesterLi.insertBefore(goalFocusClone, semesterLi.firstChild);
+
+          //Create the semester overview
+          const overviewHolder = document.createElement('div'); overviewHolder.classList.add('semester-overview');
+          const overviewTitle = document.createElement('h2'); overviewTitle.textContent = "Semseter Overview";
+          const overviewContent = document.createElement('div'); overviewContent.setAttribute('id', semester.key);
+          overviewHolder.appendChild(overviewTitle); overviewHolder.appendChild(overviewContent);
+          semesterLi.insertBefore(overviewHolder, semesterLi.firstChild);
 
           //Make sure tables exist for this semester in the DB
           if (semester.child("Tables").exists()) {
@@ -498,7 +506,7 @@ async function continueWithApp() {
             } else {
               //Get the users table then move to top
               var usersTable = semesterLi.querySelector(`[id='${auth.currentUser.uid}-table']`);
-              semesterLi.insertBefore(usersTable, semesterLi.querySelector('div:nth-child(2)'));
+              semesterLi.insertBefore(usersTable, semesterLi.querySelector('div:nth-child(3)'));
             }
           } else {
             //No tables exist, create default one for user
@@ -509,6 +517,9 @@ async function continueWithApp() {
           semesterLi = semestersContainer.querySelector(`[data-semester*="${semester.key}"]`);
           semesterLi.querySelector(".goal-focus-p").textContent = semester.child("Focus").val();
         }
+
+        //Show semester overview for this semester
+        updateSemesterOverview(semesterLi);
       });
 
       //Show table buttons if user has it on in settings
@@ -523,8 +534,13 @@ async function continueWithApp() {
   });
 
   function createSemesterMenuItem(semesterKey) {
+    const holder = document.createElement('div');
     const label = document.createElement('label');
     const input = document.createElement('input');
+
+    holder.setAttribute("name", semesterKey);
+    holder.appendChild(input);
+    holder.appendChild(label);
 
     input.setAttribute("id", semesterKey);
     input.setAttribute("type", "radio");
@@ -533,8 +549,7 @@ async function continueWithApp() {
     label.setAttribute("for", semesterKey);
     label.textContent = semesterKey;
 
-    semestersMenu.insertBefore(input, semestersMenu.firstChild);
-    input.insertAdjacentElement('afterend', label);
+    semestersMenu.insertBefore(holder, semestersMenu.firstChild);
 
     input.addEventListener('click', () => {
       Array.from(document.getElementsByName('semester-menu')).forEach((tab) => {
@@ -549,6 +564,27 @@ async function continueWithApp() {
     });
 
     input.click();
+  }
+
+  function sortSemesterMenuItems() {
+    const holders = semestersMenu.querySelectorAll('div');
+    const holderNames = [];
+    Array.from(holders).forEach((holder) => {
+      const name = holder.getAttribute('name');
+      const beginDate = name.split(": ")[1].split(" - ")[0];
+      holderNames.push({ elem: holder, date: beginDate });
+    });
+
+    holderNames.sort(function (a, b) {
+      return new Date(a.date) - new Date(b.date);
+    });
+
+    holderNames.forEach((holder) => {
+      semestersMenu.insertBefore(holder.elem, semestersMenu.firstChild);
+    });
+
+    //Click the first input after sort
+    holderNames[holderNames.length - 1].elem.firstElementChild.click();
   }
 
   function createUserTable(semesterLi, tableData) {
@@ -596,7 +632,7 @@ async function continueWithApp() {
     setCellData(goalTDs[1], 1, "", semesterLi);
     setCellData(bbTDs[1], 1, "", semesterLi);
 
-    semesterLi.insertBefore(userTableClone, semesterLi.querySelector('div:nth-child(2)'));
+    semesterLi.insertBefore(userTableClone, semesterLi.querySelector('div:nth-child(3)'));
   }
 
   function insertTableData(tableData, tableBody, semesterLi) {
@@ -704,6 +740,50 @@ async function continueWithApp() {
         break;
     }
   }
+
+  function updateSemesterOverview(semesterLi) {
+    var statusHolder = semesterLi.querySelector('.semester-overview > div');
+    var labels = ["Stuck", "Waiting", "Working On", "Not Working On", "Completed"];
+    var colors = ["#d53d3d", "#FF7F3E", "#1679AB", "#b3c8cf", "#00aa63"];
+
+    //Get each of the values
+    const statuses = semesterLi.querySelectorAll('.status-input');
+    var stuck = 0, waiting = 0, working = 0, notWorking = 0, completed = 0;
+    Array.from(statuses).forEach((status) => {
+      switch (status.textContent) {
+        case "Stuck":
+          stuck++;
+          break;
+        case "Waiting":
+          waiting++;
+          break;
+        case "Working On":
+          working++;
+          break;
+        case "Not Working On":
+          notWorking++;
+          break;
+        case "Completed":
+          completed++;
+          break;
+      }
+    });
+    var valuesArr = [
+      { value: notWorking, name: labels[3], color: colors[3] },
+      { value: working, name: labels[2], color: colors[2] },
+      { value: completed, name: labels[4], color: colors[4] },
+      { value: waiting, name: labels[1], color: colors[1] },
+      { value: stuck, name: labels[0], color: colors[0] }
+    ];
+
+    valuesArr.forEach((val) => {
+      const h3 = document.createElement('h3');
+      h3.textContent = `${val.value} - ${val.name}`;
+      h3.style.color = val.color;
+      statusHolder.appendChild(h3);
+    });
+  }
+
   //#endregion TABLE CREATION FUNCTIONS
 
   //#region CONTEXT MENU AND TABLE ACTION FUNCTIONS
@@ -1335,4 +1415,6 @@ async function continueWithApp() {
     }
   }
   //#endregion AUTO SAVE FUNCTIONS
+
+
 }
