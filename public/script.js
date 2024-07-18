@@ -162,6 +162,92 @@ function showExtraTableButtons(shouldShow) {
   }
 }
 
+function updateSemesterOverview(semesterLi) {
+  var statusHolder = semesterLi.querySelector('.semester-overview > canvas');
+  var labels = ["Not Working On", "Working On", "Completed", "Waiting", "Stuck"];
+  var colors = ["#b3c8cf", "#1679AB", "#00aa63", "#FF7F3E", "#d53d3d"];
+
+  //Get '--color-fg' var from CSS
+  var textColor = getComputedStyle(document.body).getPropertyValue('--color-fg');
+
+  //Get each of the values
+  const statuses = semesterLi.querySelectorAll('.status-input');
+  const filteredStatuses = Array.from(statuses).filter(elem => {
+    //Get the Goal/Building block td
+    const td = elem.previousElementSibling.previousElementSibling;
+
+    //Check if td is empty
+    return td && td.textContent.trim() !== '';
+  });
+
+  const statusCounts = {
+    "Not Working On": 0,
+    "Working On": 0,
+    "Completed": 0,
+    "Waiting": 0,
+    "Stuck": 0
+  };
+
+  filteredStatuses.forEach((status) => {
+    const text = status.textContent;
+    if (statusCounts.hasOwnProperty(text)) {
+      statusCounts[text]++;
+    }
+  });
+
+  const values = Object.values(statusCounts);
+
+  //Set chart defaults and then create chart
+  Chart.defaults.font.family = 'Futura PT';
+  Chart.defaults.font.size = 16;
+  Chart.defaults.font.weight = 500;
+  Chart.defaults.color = textColor;
+
+  //Initial check to see if a chart already exists, then delete
+  if (Chart.getChart(statusHolder) != undefined) {
+    Chart.getChart(statusHolder).destroy();
+  }
+
+  new Chart(statusHolder, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        axis: 'y',
+        backgroundColor: colors,
+        data: values,
+        borderRadius: 5
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      title: {
+        display: false,
+      },
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            precision: 0
+          },
+          grid: {
+            lineWidth: 2
+          }
+        },
+        y: {
+          grid: {
+            lineWidth: 2
+          }
+        }
+      }
+    }
+  });
+}
+
 window.addEventListener('load', () => {
   //Ensure that the browser supports the service worker API then register it
   if (navigator.serviceWorker) {
@@ -197,6 +283,12 @@ window.addEventListener('load', () => {
     document.querySelector("html").setAttribute("data-theme", newTheme);
     newTheme === "dark" ? changeSidebarMenuItem("menu-themes", "Light Mode", "fa-sun") : changeSidebarMenuItem("menu-themes", "Dark Mode", "fa-moon");
     sideMenuToggle.checked = false;
+
+    //Need to reset semester overview charts for each semester to show correct color
+    const semesters = Array.from(document.getElementById('semesters-container').children);
+    semesters.forEach((semester) => {
+      updateSemesterOverview(semester);
+    })
   });
 
   //Settings page variables and functions
@@ -486,9 +578,9 @@ async function continueWithApp() {
           //Create the semester overview
           const overviewHolder = document.createElement('div'); overviewHolder.classList.add('semester-overview');
           const overviewTitle = document.createElement('h2'); overviewTitle.textContent = "Semseter Overview";
-          const overviewContent = document.createElement('div'); overviewContent.setAttribute('id', semester.key);
-          overviewHolder.appendChild(overviewTitle); overviewHolder.appendChild(overviewContent);
-          semesterLi.insertBefore(overviewHolder, semesterLi.firstChild);
+          const overviewDesc = document.createElement('p'); const overviewGraph = document.createElement('canvas');
+          overviewHolder.appendChild(overviewTitle); overviewHolder.appendChild(overviewDesc);
+          overviewHolder.appendChild(overviewGraph); semesterLi.insertBefore(overviewHolder, semesterLi.firstChild);
 
           //Make sure tables exist for this semester in the DB
           if (semester.child("Tables").exists()) {
@@ -512,14 +604,14 @@ async function continueWithApp() {
             //No tables exist, create default one for user
             createDefaultTable(semesterLi, auth.currentUser.uid);
           }
+
+          //Show semester overview for this semester
+          updateSemesterOverview(semesterLi);
         } else {
           //Get existing li and update goal focus for it
           semesterLi = semestersContainer.querySelector(`[data-semester*="${semester.key}"]`);
           semesterLi.querySelector(".goal-focus-p").textContent = semester.child("Focus").val();
         }
-
-        //Show semester overview for this semester
-        updateSemesterOverview(semesterLi);
       });
 
       //Show table buttons if user has it on in settings
@@ -741,49 +833,6 @@ async function continueWithApp() {
     }
   }
 
-  function updateSemesterOverview(semesterLi) {
-    var statusHolder = semesterLi.querySelector('.semester-overview > div');
-    var labels = ["Stuck", "Waiting", "Working On", "Not Working On", "Completed"];
-    var colors = ["#d53d3d", "#FF7F3E", "#1679AB", "#b3c8cf", "#00aa63"];
-
-    //Get each of the values
-    const statuses = semesterLi.querySelectorAll('.status-input');
-    var stuck = 0, waiting = 0, working = 0, notWorking = 0, completed = 0;
-    Array.from(statuses).forEach((status) => {
-      switch (status.textContent) {
-        case "Stuck":
-          stuck++;
-          break;
-        case "Waiting":
-          waiting++;
-          break;
-        case "Working On":
-          working++;
-          break;
-        case "Not Working On":
-          notWorking++;
-          break;
-        case "Completed":
-          completed++;
-          break;
-      }
-    });
-    var valuesArr = [
-      { value: notWorking, name: labels[3], color: colors[3] },
-      { value: working, name: labels[2], color: colors[2] },
-      { value: completed, name: labels[4], color: colors[4] },
-      { value: waiting, name: labels[1], color: colors[1] },
-      { value: stuck, name: labels[0], color: colors[0] }
-    ];
-
-    valuesArr.forEach((val) => {
-      const h3 = document.createElement('h3');
-      h3.textContent = `${val.value} - ${val.name}`;
-      h3.style.color = val.color;
-      statusHolder.appendChild(h3);
-    });
-  }
-
   //#endregion TABLE CREATION FUNCTIONS
 
   //#region CONTEXT MENU AND TABLE ACTION FUNCTIONS
@@ -971,6 +1020,8 @@ async function continueWithApp() {
           lastStatusInput.style = "background: var(--color-red); color: var(--color-white);";
           break;
       }
+
+      updateSemesterOverview(lastStatusInput.closest('[data-semester]'));
     }
   });
 
@@ -1202,6 +1253,7 @@ async function continueWithApp() {
     //Delete everything from table body and reinsert
     userTableBody.replaceChildren();
     insertTableData(tableData, userTableBody, semesterLi);
+    updateSemesterOverview(semesterLi);
   }
 
   document.addEventListener('input', (e) => {
@@ -1415,6 +1467,4 @@ async function continueWithApp() {
     }
   }
   //#endregion AUTO SAVE FUNCTIONS
-
-
 }

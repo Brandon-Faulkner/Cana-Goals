@@ -963,12 +963,18 @@ button[data-tooltip]:active .tooltip {
     }
 }
 
-.semester-overview>div {
-    display: flex;
-    flex-wrap: wrap;
-    margin: auto 20px;
-    padding: 20px;
-    gap: 8px;
+.semester-overview>p {
+    color: var(--color-fg);
+    margin-left: 35px;
+}
+
+.semester-overview>p:after {
+    content: "These values come from the statuses of goals and building blocks that are not empty for this current semester.";
+}
+
+.semester-overview>canvas {
+    padding: 5px 35px 35px;
+    max-height: 300px;
 }
 
 /*#endregion SEMESTER CONTENT*/
@@ -1322,6 +1328,14 @@ td[placeholder="Add a comment..."] {
 
     .toast {
         left: 0;
+    }
+
+    .semester-overview > p {
+        margin-left: 15px;
+    }
+
+    .semester-overview > canvas {
+        padding: 5px 20px 20px;
     }
 }
 
