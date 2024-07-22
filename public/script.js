@@ -24,7 +24,7 @@ const auth = getAuth(app);
   });
 })();
 
-const VERSION_NUMBER = "2.0.0";
+const VERSION_NUMBER = "2.1";
 const STATUS_COLOR = { RED: "var(--color-red)", GREEN: "var(--color-green)" };
 const dateRegex = new RegExp(/^(\d{4})(\/|-)(\d{1,2})(\/|-)(\d{1,2})$/gm, 'gm');
 
@@ -629,6 +629,7 @@ async function continueWithApp() {
     const holder = document.createElement('div');
     const label = document.createElement('label');
     const input = document.createElement('input');
+    const p = document.createElement('p');
 
     holder.setAttribute("name", semesterKey);
     holder.appendChild(input);
@@ -639,7 +640,9 @@ async function continueWithApp() {
     input.setAttribute("name", "semester-menu");
 
     label.setAttribute("for", semesterKey);
-    label.textContent = semesterKey;
+    label.textContent = semesterKey.split(": ")[0];
+    p.textContent = semesterKey.split(": ")[1];
+    label.appendChild(p);
 
     semestersMenu.insertBefore(holder, semestersMenu.firstChild);
 

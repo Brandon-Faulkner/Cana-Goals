@@ -457,6 +457,13 @@ p[placeholder]:empty:before {
     transform: scale(1.05);
 }
 
+#semesters-menu p {
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    font-style: italic;
+}
+
 #semesters-menu input {
     display: none;
 }
@@ -653,6 +660,12 @@ p[placeholder]:empty:before {
     font-weight: 500;
     margin: auto 20px auto auto;
     width: 200px;
+}
+
+#new-updates-content p {
+    text-align: center;
+    font-style: italic;
+    font-weight: 500;
 }
 
 .pop-up-field input::placeholder {
@@ -969,7 +982,7 @@ button[data-tooltip]:active .tooltip {
 }
 
 .semester-overview>p:after {
-    content: "These values come from the statuses of goals and building blocks that are not empty for this current semester.";
+    content: "These values come from the statuses of goals and building blocks that are not empty for this semester.";
 }
 
 .semester-overview>canvas {
