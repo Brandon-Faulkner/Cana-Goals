@@ -24,7 +24,7 @@ const auth = getAuth(app);
   });
 })();
 
-const VERSION_NUMBER = "2.1";
+const VERSION_NUMBER = "2.2";
 const STATUS_COLOR = { RED: "var(--color-red)", GREEN: "var(--color-green)" };
 const dateRegex = new RegExp(/^(\d{4})(\/|-)(\d{1,2})(\/|-)(\d{1,2})$/gm, 'gm');
 
@@ -1470,4 +1470,56 @@ async function continueWithApp() {
     }
   }
   //#endregion AUTO SAVE FUNCTIONS
+
+  //#region FLOATING WINDOW FUNCTIONS
+  const floatingWindow = document.getElementById('floating-window');
+  const floatingWindowHeader = document.getElementById('floating-window-header');
+  const floatingWindowClose = document.getElementById('floating-window-close');
+  const floatingWindowShow = document.getElementById('floating-window-show');
+  let initialX, initialY;
+
+  floatingWindowHeader.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    initialX = e.pageX;
+    initialY = e.pageY;
+    document.addEventListener('mouseup', () => {
+      document.onmouseup = null;
+      document.onmousemove = null;
+    });
+    document.onmousemove = moveFloatingWindow;
+  });
+
+  function moveFloatingWindow(e) {
+    e.preventDefault();
+    const newX = initialX - e.pageX;
+    const newY = initialY - e.pageY;
+    initialX = e.pageX;
+    initialY = e.pageY;
+    floatingWindow.style.left = (floatingWindow.offsetLeft - newX) + "px";
+    floatingWindow.style.top = (floatingWindow.offsetTop - newY) + "px";
+  }
+
+  floatingWindowClose.addEventListener('click', () => {
+    floatingWindow.style.display = "none";
+  });
+
+  floatingWindowShow.addEventListener('click', () => {
+    document.getElementById('language-close').click();
+    floatingWindow.style.display = "";
+    floatingWindow.style.width = '300px';
+    floatingWindow.style.height = '300px';
+
+    //Center the floating window to the center of screen
+    var screenWidth = window.innerWidth;
+    var screenHeight = window.innerHeight;
+    var windowWidth = floatingWindow.offsetWidth;
+    var windowHeight = floatingWindow.offsetHeight;
+
+    var left = (screenWidth - windowWidth) / 2;
+    var top = (screenHeight - windowHeight) / 2;
+
+    floatingWindow.style.left = left + 'px';
+    floatingWindow.style.top = top + 'px';
+  });
+  //#endregion FLOATING WINDOW FUNCTIONS
 }

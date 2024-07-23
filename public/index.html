@@ -41,6 +41,7 @@
 
   <div id="language-page" class="pop-up-page">
     <div id="language-wrapper" class="pop-up-wrapper">
+      <span id="floating-window-show"><i class="fa-regular fa-window-restore"></i>Show Floating Window</span>
       <button id="language-close" class="pop-up-close">
         <i class="fa-solid fa-xmark"></i>
       </button>
@@ -77,6 +78,45 @@
     </div>
   </div>
 
+  <div id="floating-window" style="display: none;">
+    <div id="floating-window-header">
+      <span>Goal Language</span>
+      <button id="floating-window-close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div id="floating-window-content">
+      <span>
+        <h3><em>Goals Should Be</em></h3>
+        <p><strong>Specific</strong>&nbsp;&ndash; be clear what you are working on</p>
+        <p><strong>Measurable</strong>&nbsp;&ndash; Say how much of the project you will complete and how it is
+          measured</p>
+        <p><strong>Achievable</strong>&nbsp;&ndash; Can you get to the completion point of the goal</p>
+        <p><strong>Relevant</strong>&nbsp;&ndash; In this case, your goals should target some aspect of the bottomline
+          focus of the specified days.</p>
+        <p><strong>Timebound</strong> &ndash; Goal completion should occur within specified days.</p>
+        <h3><em>Goal Language</em></h3>
+        <p><strong>Develop</strong>&nbsp;&ndash; Develop goals describe the pursuit of an outline, assigned
+          responsibilities, a collection of leaders engaged, and executable next steps at the ready or measurably
+          completed. A Scratch
+          Sheet should be available and approved and complete with all but the most detailed of information.</p>
+        <p><strong>Research</strong>&nbsp;&ndash; Research Goals requires a completed report that includes
+          feasibility, process, and objective. Research is not concerned with preparation or execution but with
+          organization and philosophy/theology.</p>
+        <p><strong>Add on</strong>&nbsp;&ndash; Add on goals seek to add functionality or divisions of people into the
+          scope of an existing ministry. <strong>*new feature*</strong></p>
+        <p><strong>Remodel</strong>&nbsp;&ndash; Remodel goals expand a ministry or significantly improve the
+          functionality and scale of a program or activity. <strong>*better function*</strong></p>
+        <h3><em>Goal Recording</em></h3>
+        <p><strong>Building blocks are not goals</strong>&nbsp;&ndash; they are components necessary to accomplish the
+          goal. They are environmental or personnel or financial conditions necessary to reaching your goals</p>
+        <p><strong>System think</strong>&nbsp;- Your building blocks should indicate that you understand the
+          <strong>SYSTEM</strong> behind your goal.
+        </p>
+      </span>
+    </div>
+  </div>
+
   <div id="new-updates-page" class="pop-up-page">
     <div id="new-updates-wrapper" class="pop-up-wrapper">
       <button id="new-updates-close" class="pop-up-close">
@@ -86,6 +126,14 @@
         <div id="add-semester-title" class="pop-up-title">Newest Updates</div>
         <p>Version ###</p>
         <ul>
+          <li><strong>Goal Language Floating Window</strong>
+            <ul>
+              <li>If you are on desktop, you will now see a "Show Floating Window" button on the Goal Language page. Clicking
+                this button will allow you to have an indepent window to view the goal languages. You can move it around
+                by dragging from the header and can resize the window from the bottom right corner.</li>
+            </ul>
+          </li>
+          <p style="margin: 20px 0 10px -20px;">Version 2.1</p>
           <li><strong>New Semester Overviews</strong>
             <ul>
               <li>At the start of each semester, you'll see an overview showing a bar graph of goal and building block
