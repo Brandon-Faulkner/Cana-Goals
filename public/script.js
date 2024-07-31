@@ -1,4 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-functions.js";
 import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
@@ -16,6 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
+const functions = getFunctions(app);
 
 // Initialize EmailJS
 (function () {
@@ -1003,6 +1005,15 @@ async function continueWithApp() {
 
     if (e.target.parentElement.getAttribute('id') === "status-menu") {
       lastStatusInput.innerHTML = e.target.innerHTML;
+      const currentSemester = lastStatusInput.closest('[data-semester]').getAttribute('data-semester').split(": ")[0];
+      var closestGoal = lastStatusInput.closest('[data-context="user-goal"]');
+      var closestBB = lastStatusInput.closest('[data-context="user-build-block"]');
+      if (closestGoal === null) closestGoal = closestBB.closest('.fold-open').previousElementSibling;
+
+      var goalList = Array.from(closestGoal.parentElement.querySelectorAll('[data-context="user-goal"]'));
+      var bbList = closestBB === null ? null : Array.from(closestBB.parentElement.children);
+      var goalIndex = goalList.indexOf(closestGoal) + 1;
+      var bbIndex = bbList === null ? -1 : bbList.indexOf(closestBB) + 1;
 
       switch (e.target.getAttribute('id')) {
         case 'status-not-working':
@@ -1024,6 +1035,17 @@ async function continueWithApp() {
           break;
       }
 
+      //Send an update to slack, saying that a user's status has changed for a goal/building block
+      const tableUserID = lastStatusInput.closest('[data-context="user-table"]').getAttribute("id").split("-table")[0];
+      const userSlackID = allUsersInfo.child(tableUserID).child("SlackID").val();
+      var message = `Status of the #${goalIndex} goal`;
+      if (bbIndex !== -1) {
+        message += `'s #${bbIndex} building block`;
+      }
+      message += ` in the ${currentSemester} semester for <@${userSlackID}> changed to "${lastStatusInput.textContent}"`;
+      sendSlackMessage(message);
+
+      //Finally update the semester overview
       updateSemesterOverview(lastStatusInput.closest('[data-semester]'));
     }
   });
@@ -1260,7 +1282,7 @@ async function continueWithApp() {
   }
 
   document.addEventListener('input', (e) => {
-    if (e.target.classList.contains('autosave')) {
+    if (e.target.classList.contains('autosave') || e.target.getAttribute('placeholder') === "Add a comment...") {
       lastInputEdited = e.target;
 
       //Get the current timestamp and semester
@@ -1280,8 +1302,10 @@ async function continueWithApp() {
       }
 
       //Wait for auto save delay before saving any changes
-      clearTimeout(inputTimeout);
-      inputTimeout = setTimeout(autoSaveData, AUTO_SAVE_DELAY);
+      if (e.target.getAttribute('placeholder') !== "Add a comment...") {
+        clearTimeout(inputTimeout);
+        inputTimeout = setTimeout(autoSaveData, AUTO_SAVE_DELAY);
+      }
     } else if (e.target.classList.contains('goal-focus-p')) {
       //Handle goal focus update changes
       currSemesterEdited = e.target.closest('[data-semester]').getAttribute('data-semester');
@@ -1522,4 +1546,14 @@ async function continueWithApp() {
     floatingWindow.style.top = top + 'px';
   });
   //#endregion FLOATING WINDOW FUNCTIONS
+
+  //#region SLACK INTEGRATION FUNCTIONS
+  const slackMessageFunction = httpsCallable(functions, 'sendSlackMessage');
+
+  function sendSlackMessage(message) {
+    slackMessageFunction({ message: message }).then((result) => {
+      showNotifToast('Slack Message', `Success: ${result.data.success}`, STATUS_COLOR.GREEN, false);
+    });
+  }
+  //#endregion SLACK INTEGRATION FUNCTIONS
 }
