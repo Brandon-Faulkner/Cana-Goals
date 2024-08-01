@@ -1006,14 +1006,7 @@ async function continueWithApp() {
     if (e.target.parentElement.getAttribute('id') === "status-menu") {
       lastStatusInput.innerHTML = e.target.innerHTML;
       const currentSemester = lastStatusInput.closest('[data-semester]').getAttribute('data-semester').split(": ")[0];
-      var closestGoal = lastStatusInput.closest('[data-context="user-goal"]');
-      var closestBB = lastStatusInput.closest('[data-context="user-build-block"]');
-      if (closestGoal === null) closestGoal = closestBB.closest('.fold-open').previousElementSibling;
-
-      var goalList = Array.from(closestGoal.parentElement.querySelectorAll('[data-context="user-goal"]'));
-      var bbList = closestBB === null ? null : Array.from(closestBB.parentElement.children);
-      var goalIndex = goalList.indexOf(closestGoal) + 1;
-      var bbIndex = bbList === null ? -1 : bbList.indexOf(closestBB) + 1;
+      var [goalIndex, bbIndex] = getGoalOrBuildBlockIndex(lastInputEdited);
 
       switch (e.target.getAttribute('id')) {
         case 'status-not-working':
@@ -1042,7 +1035,7 @@ async function continueWithApp() {
       if (bbIndex !== -1) {
         message += `'s #${bbIndex} building block`;
       }
-      message += ` in the ${currentSemester} semester for <@${userSlackID}> changed to "${lastStatusInput.textContent}"`;
+      message += ` in the ${currentSemester} semester for <@${userSlackID}> changed to "*${lastStatusInput.textContent}*"`;
       sendSlackMessage(message);
 
       //Finally update the semester overview
@@ -1325,7 +1318,7 @@ async function continueWithApp() {
       currUserTime = new Date().getTime();
       currSemesterEdited = lastInputEdited.closest('[data-semester]').getAttribute('data-semester');
       currUserTableEdited = lastInputEdited.closest('[data-context="user-table"]').getAttribute('id');
-
+      
       //Check if the currUserTime is > auto save delay of dbUserTime or semester changed
       if ((Math.abs(currUserTime - dbUserTime) > AUTO_SAVE_DELAY) ||
         currSemesterEdited !== dbSemesterEdited || dbUserTableEdited !== currUserTableEdited) {
@@ -1341,7 +1334,7 @@ async function continueWithApp() {
       clearTimeout(inputTimeout);
       inputTimeout = setTimeout(autoSaveData, AUTO_SAVE_DELAY);
 
-      //Send email when submitting comment if user allows and it isn't their table
+      //Send email/slack message when submitting comment if user allows and it isn't their table
       if (e.target.className === 'comment-submit') {
         //If the comment is empty, we just want to save to db, not send email
         if (lastInputEdited.previousElementSibling.textContent.trim() === "") {
@@ -1379,6 +1372,15 @@ async function continueWithApp() {
               }
             );
           }
+
+          //Slack message
+          var [goalIndex, bbIndex] = getGoalOrBuildBlockIndex(lastInputEdited, true);
+          var semesterName = currSemesterEdited.split(": ")[0];
+          var tableUserSlackID = allUsersInfo.child(userID).child("SlackID").val();
+          var currUserSlackID = allUsersInfo.child(auth.currentUser.uid).child("SlackID").val();
+          var slackMessage = `<@${currUserSlackID}> has left a comment on the #${goalIndex} goal`;
+          slackMessage += ` in the ${semesterName} semester for <@${tableUserSlackID}>. Go to <https://cana-goals.web.app|Cana Goals>`;
+          sendSlackMessage(slackMessage);
         }
         //Remove the submit button
         e.target.remove();
@@ -1552,8 +1554,28 @@ async function continueWithApp() {
 
   function sendSlackMessage(message) {
     slackMessageFunction({ message: message }).then((result) => {
-      showNotifToast('Slack Message', `Success: ${result.data.success}`, STATUS_COLOR.GREEN, false);
+      //showNotifToast('Slack Message', `Success: ${result.data.success}`, STATUS_COLOR.GREEN, false);
     });
+  }
+
+  function getGoalOrBuildBlockIndex(targetElem, isComment) {
+    var closestGoal, closestBB;
+
+    if (isComment) {
+      closestGoal = targetElem.closest('.fold-open').previousElementSibling;
+      closestBB = null;
+    } else {
+      closestGoal = targetElem.closest('[data-context="user-goal"]');
+      closestBB = targetElem.closest('[data-context="user-build-block"]');
+      if (closestGoal === null) closestGoal = closestBB.closest('.fold-open').previousElementSibling;
+    }
+
+    var goalList = Array.from(closestGoal.parentElement.querySelectorAll('[data-context="user-goal"]'));
+    var bbList = closestBB === null ? null : Array.from(closestBB.parentElement.children);
+    var goalIndex = goalList.indexOf(closestGoal) + 1;
+    var bbIndex = bbList === null ? -1 : bbList.indexOf(closestBB) + 1;
+
+    return [goalIndex, bbIndex];
   }
   //#endregion SLACK INTEGRATION FUNCTIONS
 }
