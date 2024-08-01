@@ -26,7 +26,7 @@ const functions = getFunctions(app);
   });
 })();
 
-const VERSION_NUMBER = "2.2";
+const VERSION_NUMBER = "2.3";
 const STATUS_COLOR = { RED: "var(--color-red)", GREEN: "var(--color-green)" };
 const dateRegex = new RegExp(/^(\d{4})(\/|-)(\d{1,2})(\/|-)(\d{1,2})$/gm, 'gm');
 
@@ -1318,7 +1318,7 @@ async function continueWithApp() {
       currUserTime = new Date().getTime();
       currSemesterEdited = lastInputEdited.closest('[data-semester]').getAttribute('data-semester');
       currUserTableEdited = lastInputEdited.closest('[data-context="user-table"]').getAttribute('id');
-      
+
       //Check if the currUserTime is > auto save delay of dbUserTime or semester changed
       if ((Math.abs(currUserTime - dbUserTime) > AUTO_SAVE_DELAY) ||
         currSemesterEdited !== dbSemesterEdited || dbUserTableEdited !== currUserTableEdited) {
@@ -1373,14 +1373,16 @@ async function continueWithApp() {
             );
           }
 
-          //Slack message
-          var [goalIndex, bbIndex] = getGoalOrBuildBlockIndex(lastInputEdited, true);
-          var semesterName = currSemesterEdited.split(": ")[0];
-          var tableUserSlackID = allUsersInfo.child(userID).child("SlackID").val();
-          var currUserSlackID = allUsersInfo.child(auth.currentUser.uid).child("SlackID").val();
-          var slackMessage = `<@${currUserSlackID}> has left a comment on the #${goalIndex} goal`;
-          slackMessage += ` in the ${semesterName} semester for <@${tableUserSlackID}>. Go to <https://cana-goals.web.app|Cana Goals>`;
-          sendSlackMessage(slackMessage);
+          //Slack message if table is owned by current user
+          if (userID !== auth.currentUser.uid) {
+            var [goalIndex, bbIndex] = getGoalOrBuildBlockIndex(lastInputEdited, true);
+            var semesterName = currSemesterEdited.split(": ")[0];
+            var tableUserSlackID = allUsersInfo.child(userID).child("SlackID").val();
+            var currUserSlackID = allUsersInfo.child(auth.currentUser.uid).child("SlackID").val();
+            var slackMessage = `<@${currUserSlackID}> has left a comment on the #${goalIndex} goal`;
+            slackMessage += ` in the ${semesterName} semester for <@${tableUserSlackID}>. Go to <https://cana-goals.web.app|Cana Goals>`;
+            sendSlackMessage(slackMessage);
+          }
         }
         //Remove the submit button
         e.target.remove();
