@@ -461,11 +461,64 @@ async function continueWithApp() {
   const statusMenu = document.getElementById('status-menu');
   var currUserName, isUserAdmin, allUsersInfo;
 
+  //#region SLACK INTEGRATION FUNCTIONS
+  const slackMessageFunction = httpsCallable(functions, 'sendSlackMessage');
+  const slackStatusFunction = httpsCallable(functions, 'sendSlackUserStatus');
+
+  function sendSlackMessage(message) {
+    slackMessageFunction({ message: message }).then((result) => {
+      //showNotifToast('Slack Message', `Success: ${result.data.success}`, STATUS_COLOR.GREEN, false);
+    });
+  }
+
+  function sendSlackStatus(message) {
+    slackStatusFunction({ message: message }).then((result) => {
+      //showNotifToast('Slack Status', `Success: ${result.data.success}`, STATUS_COLOR.GREEN, false);
+    });
+  }
+
+  function getGoalOrBuildBlockIndex(targetElem, isComment) {
+    var closestGoal, closestBB;
+
+    if (isComment) {
+      closestGoal = targetElem.closest('.fold-open').previousElementSibling;
+      closestBB = null;
+    } else {
+      closestGoal = targetElem.closest('[data-context="user-goal"]');
+      closestBB = targetElem.closest('[data-context="user-build-block"]');
+      if (closestGoal === null) closestGoal = closestBB.closest('.fold-open').previousElementSibling;
+    }
+
+    var goalList = Array.from(closestGoal.parentElement.querySelectorAll('[data-context="user-goal"]'));
+    var bbList = closestBB === null ? null : Array.from(closestBB.parentElement.children);
+    var goalIndex = goalList.indexOf(closestGoal) + 1;
+    var bbIndex = bbList === null ? -1 : bbList.indexOf(closestBB) + 1;
+
+    return [goalIndex, bbIndex];
+  }
+  //#endregion SLACK INTEGRATION FUNCTIONS
+
   //#region TABLE CREATION FUNCTIONS
   await get(ref(database, `Users/${auth.currentUser.uid}`)).then((snapshot) => {
     currUserName = snapshot.child("Name").val();
     isUserAdmin = snapshot.child("isAdmin").val();
     createAddSemesterMenuItem(isUserAdmin);
+
+    //Send user login status to Slack if status hasn't been sent within 4 hours
+    const localSlackStatus = localStorage.getItem("slack-status");
+    if (localSlackStatus) {
+      const timestamp = new Date(localSlackStatus);
+      const fourHours = 4 * 60 * 60 * 1000;
+      const threshold = Date.now() - fourHours;
+
+      if (timestamp >= threshold) {
+        localStorage.setItem("slack-status", Date.now());
+        sendSlackStatus(`${currUserName} is on Cana Goals.`);
+      }
+    } else {
+      localStorage.setItem("slack-status", Date.now());
+      sendSlackStatus(`${currUserName} is on Cana Goals.`);
+    }
 
     //Update settings page with the current settings saved by user
     if (snapshot.child("Settings").exists()) {
@@ -483,7 +536,8 @@ async function continueWithApp() {
     onValue(ref(database, 'Users/'), (snapshot) => {
       allUsersInfo = snapshot;
     });
-  }).catch(() => {
+  }).catch((error) => {
+    console.log(error);
     const message = "There was an error retrieving your info from the database. Refresh the page to try again."
     showNotifToast("Error Retrieving Info", message, STATUS_COLOR.RED, false);
   });
@@ -1550,34 +1604,4 @@ async function continueWithApp() {
     floatingWindow.style.top = top + 'px';
   });
   //#endregion FLOATING WINDOW FUNCTIONS
-
-  //#region SLACK INTEGRATION FUNCTIONS
-  const slackMessageFunction = httpsCallable(functions, 'sendSlackMessage');
-
-  function sendSlackMessage(message) {
-    slackMessageFunction({ message: message }).then((result) => {
-      //showNotifToast('Slack Message', `Success: ${result.data.success}`, STATUS_COLOR.GREEN, false);
-    });
-  }
-
-  function getGoalOrBuildBlockIndex(targetElem, isComment) {
-    var closestGoal, closestBB;
-
-    if (isComment) {
-      closestGoal = targetElem.closest('.fold-open').previousElementSibling;
-      closestBB = null;
-    } else {
-      closestGoal = targetElem.closest('[data-context="user-goal"]');
-      closestBB = targetElem.closest('[data-context="user-build-block"]');
-      if (closestGoal === null) closestGoal = closestBB.closest('.fold-open').previousElementSibling;
-    }
-
-    var goalList = Array.from(closestGoal.parentElement.querySelectorAll('[data-context="user-goal"]'));
-    var bbList = closestBB === null ? null : Array.from(closestBB.parentElement.children);
-    var goalIndex = goalList.indexOf(closestGoal) + 1;
-    var bbIndex = bbList === null ? -1 : bbList.indexOf(closestBB) + 1;
-
-    return [goalIndex, bbIndex];
-  }
-  //#endregion SLACK INTEGRATION FUNCTIONS
 }
