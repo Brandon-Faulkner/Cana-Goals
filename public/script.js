@@ -509,9 +509,9 @@ async function continueWithApp() {
     if (localSlackStatus) {
       const timestamp = new Date(localSlackStatus);
       const fourHours = 4 * 60 * 60 * 1000;
-      const threshold = Date.now() - fourHours;
+      const fourHoursAgo = Date.now() - fourHours;
 
-      if (timestamp >= threshold) {
+      if (timestamp < fourHoursAgo) {
         localStorage.setItem("slack-status", Date.now());
         sendSlackStatus(`${currUserName} is on Cana Goals.`);
       }
