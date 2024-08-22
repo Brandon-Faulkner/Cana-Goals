@@ -633,7 +633,7 @@ async function continueWithApp() {
 
           //Create the semester overview
           const overviewHolder = document.createElement('div'); overviewHolder.classList.add('semester-overview');
-          const overviewTitle = document.createElement('h2'); overviewTitle.textContent = "Semseter Overview";
+          const overviewTitle = document.createElement('h2'); overviewTitle.textContent = "Semeseter Overview";
           const overviewDesc = document.createElement('p'); const overviewGraph = document.createElement('canvas');
           overviewHolder.appendChild(overviewTitle); overviewHolder.appendChild(overviewDesc);
           overviewHolder.appendChild(overviewGraph); semesterLi.insertBefore(overviewHolder, semesterLi.firstChild);
