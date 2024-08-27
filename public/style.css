@@ -1398,7 +1398,7 @@ td[placeholder="Add a comment..."] {
 /*#endregion FLOATING WINDOW*/
 
 /*#region MOBILE RESPONSIVENESS*/
-@media (max-width: 1000px) or (any-pointer: coarse) {
+@media (max-width: 1000px) {
     #floating-window-show {
         display: none;
     }
