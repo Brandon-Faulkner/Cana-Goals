@@ -222,6 +222,7 @@ function updateSemesterOverview(semesterLi) {
       }]
     },
     options: {
+      animation: false,
       indexAxis: 'y',
       title: {
         display: false,
@@ -1250,7 +1251,7 @@ async function continueWithApp() {
         //Disable the table that this uid is working on
         const table = document.querySelector(`[data-semester="${semesterEdited}"] [id="${tableEdited}"]`);
         const timeDiff = Math.abs(currentTime - timestamp);
-        changeTableEditability(table, timeDiff);
+        if (table) changeTableEditability(table, timeDiff);
       }
     });
   });
