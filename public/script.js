@@ -634,7 +634,7 @@ async function continueWithApp() {
 
           //Create the semester overview
           const overviewHolder = document.createElement('div'); overviewHolder.classList.add('semester-overview');
-          const overviewTitle = document.createElement('h2'); overviewTitle.textContent = "Semeseter Overview";
+          const overviewTitle = document.createElement('h2'); overviewTitle.textContent = "Semester Overview";
           const overviewDesc = document.createElement('p'); const overviewGraph = document.createElement('canvas');
           overviewHolder.appendChild(overviewTitle); overviewHolder.appendChild(overviewDesc);
           overviewHolder.appendChild(overviewGraph); semesterLi.insertBefore(overviewHolder, semesterLi.firstChild);
@@ -1561,6 +1561,7 @@ async function continueWithApp() {
   const floatingWindowShow = document.getElementById('floating-window-show');
   let initialX, initialY;
 
+  //For devices with a mouse attached
   floatingWindowHeader.addEventListener('mousedown', (e) => {
     e.preventDefault();
     initialX = e.pageX;
@@ -1572,19 +1573,45 @@ async function continueWithApp() {
     document.onmousemove = moveFloatingWindow;
   });
 
-  function moveFloatingWindow(e) {
+  //For tablets or computers with touchscreen
+  floatingWindowHeader.addEventListener('touchstart', (e) => {
     e.preventDefault();
-    const newX = initialX - e.pageX;
-    const newY = initialY - e.pageY;
-    initialX = e.pageX;
-    initialY = e.pageY;
+    initialX = e.touches[0].clientX;
+    initialY = e.touches[0].clientY;
+    document.addEventListener('touchend', () => {
+      document.ontouchend = null;
+      document.ontouchmove = null;
+    });
+    document.ontouchmove = moveFloatingWindow;
+  });
+
+  function moveFloatingWindow(e) {
+    var newX, newY;
+    if (e.touches) {
+      newX = initialX - e.touches[0].pageX;
+      newY = initialY - e.touches[0].pageY;
+      initialX = e.touches[0].pageX;
+      initialY = e.touches[0].pageY;
+    } else {
+      newX = initialX - e.pageX;
+      newY = initialY - e.pageY;
+      initialX = e.pageX;
+      initialY = e.pageY;
+    }
+
     floatingWindow.style.left = (floatingWindow.offsetLeft - newX) + "px";
     floatingWindow.style.top = (floatingWindow.offsetTop - newY) + "px";
   }
 
-  floatingWindowClose.addEventListener('click', () => {
+  floatingWindowClose.addEventListener('click', (e) => {
+    e.preventDefault();
     floatingWindow.style.display = "none";
   });
+
+  floatingWindowClose.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    floatingWindow.style.display = 'none';
+  })
 
   floatingWindowShow.addEventListener('click', () => {
     document.getElementById('language-close').click();
