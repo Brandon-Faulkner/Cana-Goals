@@ -4,7 +4,7 @@ import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDDYuTQDXbkmGM73f-mBCghdLeTsXLoS9Q",
+  apiKey: "AIzaSyBW-xP2CbE3RS80jHySmz_9aUEWeOU2uRo",
   authDomain: "cana-goals.firebaseapp.com",
   projectId: "cana-goals",
   storageBucket: "cana-goals.appspot.com",
