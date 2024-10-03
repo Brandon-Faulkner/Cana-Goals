@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-functions.js";
 import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBW-xP2CbE3RS80jHySmz_9aUEWeOU2uRo",
@@ -385,6 +385,12 @@ window.addEventListener('load', () => {
   const loginButton = document.getElementById('login-button');
   const loginPeek = loginPassword.nextElementSibling;
 
+  const forgotPassLink = document.getElementById("forgot-password-link");
+  const forgotPassScreen = document.getElementById('forgot-password-page');
+  const forgotPassEmail = document.getElementById('forgot-password-email');
+  const forgotPassSend = document.getElementById('forgot-password-send');
+  const forgotPassBack = document.getElementById('forgot-password-back');
+
   //Detect login status and setup tables
   onAuthStateChanged(auth, (user) => {
     if (user === null) {
@@ -425,6 +431,29 @@ window.addEventListener('load', () => {
       loginPeek.className = "fa-solid fa-eye eye-icon";
       loginPassword.setAttribute('type', 'password');
     }
+  });
+
+  forgotPassLink.addEventListener('click', () => {
+    loginScreen.classList.remove('pop-up');
+    forgotPassScreen.classList.add('pop-up');
+  });
+
+  forgotPassSend.addEventListener('click', () => {
+    if (forgotPassEmail.value.trim() !== "") {
+      sendPasswordResetEmail(auth, forgotPassEmail.value).then(() => {
+        showNotifToast("Password Reset Email Sent", "Check your inbox to see if you have received an email allowing you to reset your password.", STATUS_COLOR.GREEN, true, 8);
+      }).catch((error) => {
+        showNotifToast("Error Sending Reset Email", `${error.code}: ${error.message}`, STATUS_COLOR.RED, true, 8);
+      });
+    } else {
+      showNotifToast("Error Sending Reset Email", "Make sure you have correctly entered your email address before pressing send.", STATUS_COLOR.RED, true, 5);
+    }
+  });
+
+  forgotPassBack.addEventListener('click', () => {
+    forgotPassEmail.textContent = '';
+    forgotPassScreen.classList.remove('pop-up');
+    loginScreen.classList.add('pop-up');
   });
 
   function signInUser(auth, email, password) {

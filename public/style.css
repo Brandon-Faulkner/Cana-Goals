@@ -725,6 +725,16 @@ p[placeholder]:empty:before {
     color: var(--color-red) !important;
 }
 
+.pop-up-link {
+    width: 80%;
+    justify-self: center;
+    text-align: center;
+    margin-top: 20px;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 500;
+}
+
 @keyframes rotating {
     from {
         transform: rotate(0deg);
@@ -1395,6 +1405,7 @@ td[placeholder="Add a comment..."] {
 .fa-window-restore {
     margin-right: 5px;
 }
+
 /*#endregion FLOATING WINDOW*/
 
 /*#region MOBILE RESPONSIVENESS*/
@@ -1424,11 +1435,11 @@ td[placeholder="Add a comment..."] {
         left: 0;
     }
 
-    .semester-overview > p {
+    .semester-overview>p {
         margin-left: 15px;
     }
 
-    .semester-overview > canvas {
+    .semester-overview>canvas {
         padding: 5px 20px 20px;
     }
 }
