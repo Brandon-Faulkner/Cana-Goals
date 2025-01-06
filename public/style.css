@@ -1126,6 +1126,10 @@ table td:not(:has(button, table)):active {
     white-space: break-spaces;
 }
 
+.comment-table > tbody {
+    white-space: collapse;
+}
+
 .fold-open>td>div {
     padding-left: 50px;
     margin: -60px 0;

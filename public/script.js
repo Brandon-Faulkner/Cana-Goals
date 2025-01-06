@@ -1300,7 +1300,7 @@ async function continueWithApp() {
         editSpan.removeAttribute("style");
 
         editableElems.forEach((elem) => {
-          elem.setAttribute("contenteditable", "plaintext-only");
+          elem.setAttribute("contenteditable", "true");
         });
         inputElems.forEach((elem) => {
           elem.removeAttribute("disabled");
