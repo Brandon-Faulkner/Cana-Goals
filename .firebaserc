@@ -1,5 +1,12 @@
 {
   "projects": {
     "default": "cana-goals"
-  }
+  },
+  "targets": {},
+  "etags": {
+    "cana-goals": {
+      "extensionInstances": {}
+    }
+  },
+  "dataconnectEmulatorConfig": {}
 }
