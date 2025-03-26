@@ -1,9 +1,9 @@
 const { onCall } = require("firebase-functions/v2/https");
 const axios = require('axios').default;
-const functions = require("firebase-functions");
+require('dotenv').config();
 
-const SLACK_MESSAGE_WEBHOOK = functions.config().slack.message_webhook;
-const SLACK_STATUS_WEBHOOK = functions.config().slack.status_webhook;
+const SLACK_MESSAGE_WEBHOOK = process.env.SLACK_MESSAGE_WEBHOOK_KEY;
+const SLACK_STATUS_WEBHOOK = process.env.SLACK_STATUS_WEBHOOK_KEY;
 
 // Called from the Cana Goals web app to send user goal changes to Slack
 exports.sendSlackMessage = onCall(async (request) => {
